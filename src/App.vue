@@ -71,7 +71,7 @@ const {
             </SplitterPanel>
             <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />
             <SplitterPanel
-              v-if="panelStates.ndv.isVisible"
+              v-if="panelStates.footer.isVisible"
               id="footer"
               ref="footerRef"
               :default-size="33"

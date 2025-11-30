@@ -1,20 +1,31 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
+</script>
 
 <template>
   <div class="wrapper">
     <nav class="nav"></nav>
     <main class="main">
       <header class="header"></header>
-      <div class="content">
-        <div class="left-panel"></div>
-        <div class="container">
-          <div class="center">
-            <div class="main-panel"></div>
-            <div class="right-panel"></div>
-          </div>
-          <footer class="footer"></footer>
-        </div>
-      </div>
+      <SplitterGroup auto-save-id="editor-1" direction="horizontal">
+        <SplitterPanel :max-size="40" :default-size="20" collapsible :min-size="15"
+          >Assistant</SplitterPanel
+        >
+        <SplitterResizeHandle class="handle" />
+        <SplitterPanel>
+          <SplitterGroup auto-save-id="editor-2" direction="vertical">
+            <SplitterPanel>
+              <SplitterGroup auto-save-id="editor-3" direction="horizontal">
+                <SplitterPanel>Canvas</SplitterPanel>
+                <SplitterResizeHandle class="handle" />
+                <SplitterPanel :default-size="33" collapsible :min-size="15">NDV</SplitterPanel>
+              </SplitterGroup>
+            </SplitterPanel>
+            <SplitterResizeHandle class="handle" />
+            <SplitterPanel :default-size="33" collapsible :min-size="15">Footer</SplitterPanel>
+          </SplitterGroup>
+        </SplitterPanel>
+      </SplitterGroup>
     </main>
   </div>
 </template>
@@ -51,47 +62,17 @@
   background-color: yellow;
 }
 
-.content {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  width: 100%;
-  background-color: lime;
+.handle {
+  background-color: red;
 }
 
-.left-panel {
-  width: 200px;
-  border-right: 1px solid black;
-  background-color: orange;
+.handle[data-orientation='horizontal'] {
+  width: 2px;
+  cursor: ew-resize;
 }
 
-.container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-.center {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.main-panel {
-  flex: 1;
-  background-color: white;
-}
-
-.right-panel {
-  width: 300px;
-  border-left: 1px solid black;
-  background-color: pink;
-}
-.footer {
-  height: 30px;
-  width: 100%;
-  border-top: 1px solid black;
-  background-color: purple;
+.handle[data-orientation='vertical'] {
+  height: 2px;
+  cursor: ew-resize;
 }
 </style>

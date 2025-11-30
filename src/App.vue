@@ -35,9 +35,11 @@ const ndvTabs = useTabs({
 // Setup tabs for footer panel
 const footerTabs = useTabs({
   tabs: [
-    { value: 'tab1', label: 'Tab1' },
-    { value: 'tab2', label: 'Tab2' },
-    { value: 'tab3', label: 'Tab3' },
+    { value: 'Executions', label: 'Executions' },
+    { value: 'Evaluations', label: 'Evaluations' },
+    { value: 'Data tables', label: 'Data tables' },
+    { value: 'Variable', label: 'Variable' },
+    { value: 'Issues', label: 'Issues' },
   ],
   defaultValue: 'tab1',
 })

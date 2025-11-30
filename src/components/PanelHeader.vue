@@ -21,11 +21,20 @@ defineEmits<{
 <template>
   <div class="PanelHeaderContainer">
     <header class="PanelHeader">
-      <h2 class="PanelTitle">{{ title }}</h2>
+      <TabHeader
+        v-if="tabs && tabs.length > 0"
+        :tabs="tabs"
+        :active-tab="activeTab || ''"
+        @update:active-tab="$emit('update:activeTab', $event)"
+      />
       <div class="PanelControls">
         <button class="PanelControlButton" @click="$emit('toggle-fullscreen')">
           <PanelBottom v-if="fullScreen && position === 'bottom'" :stroke-width="1.5" :size="16" />
-          <PanelRight v-else-if="fullScreen && position === 'right'" :stroke-width="1.5" :size="16" />
+          <PanelRight
+            v-else-if="fullScreen && position === 'right'"
+            :stroke-width="1.5"
+            :size="16"
+          />
           <Scan :size="16" :stroke-width="1.5" v-else />
         </button>
         <button class="PanelControlButton" @click="$emit('close-panel')">
@@ -33,12 +42,6 @@ defineEmits<{
         </button>
       </div>
     </header>
-    <TabHeader 
-      v-if="tabs && tabs.length > 0"
-      :tabs="tabs"
-      :active-tab="activeTab || ''"
-      @update:active-tab="$emit('update:activeTab', $event)"
-    />
   </div>
 </template>
 
@@ -51,7 +54,7 @@ defineEmits<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px;
+
   background-color: #f0f0f0;
 }
 
@@ -62,6 +65,7 @@ defineEmits<{
 .PanelControls {
   display: flex;
   gap: 8px;
+  padding: 8px;
 }
 
 .PanelControlButton {

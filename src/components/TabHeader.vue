@@ -13,18 +13,13 @@ defineEmits<{
 </script>
 
 <template>
-  <TabsRoot 
-    :model-value="activeTab" 
+  <TabsRoot
+    :model-value="activeTab"
     @update:model-value="$emit('update:activeTab', $event)"
     class="TabsRoot"
   >
     <TabsList class="TabsList">
-      <TabsTrigger 
-        v-for="tab in tabs" 
-        :key="tab.value" 
-        :value="tab.value"
-        class="TabsTrigger"
-      >
+      <TabsTrigger v-for="tab in tabs" :key="tab.value" :value="tab.value" class="TabsTrigger">
         {{ tab.label }}
       </TabsTrigger>
     </TabsList>
@@ -39,28 +34,26 @@ defineEmits<{
 
 .TabsList {
   display: flex;
-  border-bottom: 1px solid #e2e2e2;
-  background-color: #f8f8f8;
 }
 
 .TabsTrigger {
   background: none;
   border: none;
-  padding: 8px 16px;
+  padding: 8px 10px;
   cursor: pointer;
   font-size: 12px;
-  color: #666;
+
   border-bottom: 2px solid transparent;
   transition: all 0.2s ease;
 }
 
-.TabsTrigger[data-state="active"] {
+.TabsTrigger[data-state='active'] {
   color: #333;
   border-bottom-color: #007acc;
   background-color: #fff;
 }
 
-.TabsTrigger:hover:not([data-state="active"]) {
+.TabsTrigger:hover:not([data-state='active']) {
   background-color: #f0f0f0;
   color: #333;
 }

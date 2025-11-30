@@ -27,7 +27,9 @@ defineEmits<{
         :active-tab="activeTab || ''"
         @update:active-tab="$emit('update:activeTab', $event)"
       />
+
       <div class="PanelControls">
+        <slot name="controls"></slot>
         <button class="PanelControlButton" @click="$emit('toggle-fullscreen')">
           <PanelBottom v-if="fullScreen && position === 'bottom'" :stroke-width="1.5" :size="16" />
           <PanelRight
@@ -54,7 +56,7 @@ defineEmits<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-
+  max-height: 33px;
   background-color: #f0f0f0;
 }
 

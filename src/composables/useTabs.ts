@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 export interface Tab {
   value: string
   label: string
-  content?: any
+  content?: unknown
 }
 
 export interface TabsConfig {

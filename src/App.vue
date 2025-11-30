@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import PanelHeader from './components/PanelHeader.vue'
 import { useEditorPanels } from './composables/useEditorPanels'
 import { useTabs } from './composables/useTabs'
 import FakeNodes from './components/FakeNodes.vue'
+import ReusableDropdown from './components/ReusableDropdown.vue'
+import type { DropdownItem } from './components/ReusableDropdown.vue'
+import { Plus } from 'lucide-vue-next'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
@@ -69,10 +72,35 @@ const handleNodeDoubleClick = (nodeId: string) => {
   }
 }
 
-const nodes = ref([
-  { id: '1', name: 'Trigger', params: {} },
-  { id: '2', name: 'Agent', params: {} },
-  { id: '3', name: 'Code', params: {} },
+interface FakeNode {
+  id: string
+  name: string
+  params: Record<string, { type: string; value: string }>
+}
+
+const nodes = ref<FakeNode[]>([
+  {
+    id: '1',
+    name: 'Trigger',
+    params: {
+      channel: { type: 'string', value: '1234' },
+    },
+  },
+  {
+    id: '2',
+    name: 'Agent',
+    params: {
+      systemPrompt: { type: 'string', value: 'You are a helpful assistant.' },
+      userPrompt: { type: 'string', value: 'Help me with my tasks.' },
+    },
+  },
+  {
+    id: '3',
+    name: 'Code',
+    params: {
+      javaScript: { type: 'string', value: 'console.log("Hello, world!");' },
+    },
+  },
 ])
 
 // Setup tabs for NDV panel (start empty)
@@ -89,6 +117,50 @@ const footerTabs = useTabs({
   ],
   defaultValue: 'tab1',
 })
+
+// Create dropdown items from nodes
+const dropdownItems = computed<DropdownItem[]>(() => {
+  return nodes.value.map((node) => ({
+    id: node.id,
+    label: node.name,
+    children: Object.entries(node.params).map(([key]) => ({
+      id: key,
+      label: key,
+    })),
+  }))
+})
+
+// Handle dropdown item clicks
+const handleDropdownItemClick = (nodeId: string, paramKey?: string) => {
+  const node = nodes.value.find((n) => n.id === nodeId)
+  if (!node) return
+
+  let tabValue: string
+  let tabLabel: string
+
+  if (paramKey) {
+    // Param clicked - format: NodeName / ParamKey
+    tabValue = `node-${nodeId}-param-${paramKey}`
+    tabLabel = `${node.name} / ${paramKey}`
+  } else {
+    // Node clicked - add/open node tab
+    tabValue = `node-${nodeId}`
+    tabLabel = node.name
+  }
+
+  if (ndvTabs.hasTab(tabValue)) {
+    // Switch to existing tab
+    ndvTabs.setActiveTab(tabValue)
+  } else {
+    // Add new tab
+    ndvTabs.addTab({ value: tabValue, label: tabLabel })
+  }
+
+  // Show NDV panel if hidden
+  if (!panelStates.value.ndv.isVisible) {
+    togglePanelVisibility('ndv')
+  }
+}
 </script>
 
 <template>
@@ -141,7 +213,16 @@ const footerTabs = useTabs({
                     @toggle-fullscreen="() => toggleFullScreen('ndv')"
                     @close-panel="() => togglePanelVisibility('ndv')"
                     @update:active-tab="ndvTabs.setActiveTab"
-                  />
+                  >
+                    <template #controls>
+                      <ReusableDropdown
+                        trigger-label="Add tab"
+                        :items="dropdownItems"
+                        @item-click="handleDropdownItemClick"
+                        ><Plus :size="14" :stroke-width="1.5"
+                      /></ReusableDropdown>
+                    </template>
+                  </PanelHeader>
                   <div class="panel-content">
                     <div v-if="ndvTabs.activeTab.value">
                       Node Details: {{ ndvTabs.activeTab.value.label }}

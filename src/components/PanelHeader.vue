@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { PanelRight, X, PanelBottom, Scan } from 'lucide-vue-next'
+
 defineProps<{
   title: string
   fullScreen: boolean
+  position: 'bottom' | 'right'
 }>()
 
 defineEmits<{
@@ -12,12 +15,16 @@ defineEmits<{
 
 <template>
   <header class="PanelHeader">
-    <h2>{{ title }}</h2>
-    <div>
-      <button @click="$emit('toggle-fullscreen')">
-        {{ fullScreen ? 'Exit Fullscreen' : 'Fullscreen' }}
+    <h2 class="PanelTitle">{{ title }}</h2>
+    <div class="PanelControls">
+      <button class="PanelControlButton" @click="$emit('toggle-fullscreen')">
+        <PanelBottom v-if="fullScreen && position === 'bottom'" :size="16" />
+        <PanelRight v-else-if="fullScreen && position === 'right'" :size="16" />
+        <Scan :size="16" v-else />
       </button>
-      <button @click="$emit('close-panel')">Close</button>
+      <button class="PanelControlButton" @click="$emit('close-panel')">
+        <X :size="16" />
+      </button>
     </div>
   </header>
 </template>
@@ -27,8 +34,26 @@ defineEmits<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: 4px;
   background-color: #f0f0f0;
   border-bottom: 1px solid #ccc;
+}
+
+.PanelTitle {
+  font-size: 14px;
+}
+
+.PanelControls {
+  display: flex;
+  gap: 8px;
+}
+
+.PanelControlButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
 }
 </style>

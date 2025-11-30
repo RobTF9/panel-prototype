@@ -60,6 +60,7 @@ const {
                   :min-size="15"
                 >
                   <PanelHeader
+                    position="right"
                     :full-screen="currentFullScreenPanel === 'ndv'"
                     title="NDV"
                     @toggle-fullscreen="() => toggleFullScreen('ndv')"
@@ -78,6 +79,7 @@ const {
               :min-size="15"
             >
               <PanelHeader
+                position="bottom"
                 :full-screen="currentFullScreenPanel === 'footer'"
                 title="Footer"
                 @toggle-fullscreen="() => toggleFullScreen('footer')"

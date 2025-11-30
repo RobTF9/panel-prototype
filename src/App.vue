@@ -3,6 +3,7 @@ import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import { ref } from 'vue'
 import PanelHeader from './components/PanelHeader.vue'
 import { useEditorPanels } from './composables/useEditorPanels'
+import { useTabs } from './composables/useTabs'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
@@ -19,6 +20,26 @@ const {
   canvasRef,
   ndvRef,
   footerRef,
+})
+
+// Setup tabs for NDV panel
+const ndvTabs = useTabs({
+  tabs: [
+    { value: 'tab1', label: 'Tab1' },
+    { value: 'tab2', label: 'Tab2' },
+    { value: 'tab3', label: 'Tab3' },
+  ],
+  defaultValue: 'tab1',
+})
+
+// Setup tabs for footer panel
+const footerTabs = useTabs({
+  tabs: [
+    { value: 'tab1', label: 'Tab1' },
+    { value: 'tab2', label: 'Tab2' },
+    { value: 'tab3', label: 'Tab3' },
+  ],
+  defaultValue: 'tab1',
 })
 </script>
 
@@ -63,9 +84,15 @@ const {
                     position="right"
                     :full-screen="currentFullScreenPanel === 'ndv'"
                     title="NDV"
+                    :tabs="ndvTabs.tabs"
+                    :active-tab="ndvTabs.activeTabValue.value"
                     @toggle-fullscreen="() => toggleFullScreen('ndv')"
                     @close-panel="() => togglePanelVisibility('ndv')"
+                    @update:active-tab="ndvTabs.setActiveTab"
                   />
+                  <div class="panel-content">
+                    Active NDV Tab: {{ ndvTabs.activeTab.value?.label }}
+                  </div>
                 </SplitterPanel>
               </SplitterGroup>
             </SplitterPanel>
@@ -82,9 +109,15 @@ const {
                 position="bottom"
                 :full-screen="currentFullScreenPanel === 'footer'"
                 title="Footer"
+                :tabs="footerTabs.tabs"
+                :active-tab="footerTabs.activeTabValue.value"
                 @toggle-fullscreen="() => toggleFullScreen('footer')"
                 @close-panel="() => togglePanelVisibility('footer')"
+                @update:active-tab="footerTabs.setActiveTab"
               />
+              <div class="panel-content">
+                Active Footer Tab: {{ footerTabs.activeTab.value?.label }}
+              </div>
             </SplitterPanel>
           </SplitterGroup>
         </SplitterPanel>
@@ -133,5 +166,11 @@ const {
 
 .handle[data-orientation='vertical'] {
   height: 1px;
+}
+
+.panel-content {
+  padding: 16px;
+  font-size: 14px;
+  color: #666;
 }
 </style>

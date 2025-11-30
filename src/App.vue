@@ -2,67 +2,24 @@
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
 import { ref } from 'vue'
 import PanelHeader from './components/PanelHeader.vue'
+import { useEditorPanels } from './composables/useEditorPanels'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
 const ndvRef = ref<InstanceType<typeof SplitterPanel>>()
 const footerRef = ref<InstanceType<typeof SplitterPanel>>()
 
-const refs = {
-  canvas: canvasRef,
-  ndv: ndvRef,
-  footer: footerRef,
-}
-
-const preFullScreenState = ref<Record<string, number>>({})
-
-const fullScreen = ref<string | null>(null)
-
-const hiddenPanels = ref<Set<string>>(new Set())
-
-function closePanel(panel: 'canvas' | 'ndv' | 'footer') {
-  const panelRef = refs[panel]
-  panelRef.value?.collapse()
-  panelRef.value?.resize(0)
-  hiddenPanels.value.add(panel)
-}
-
-function resetPanels() {
-  Object.entries(refs).forEach(([key, panelRef]) => {
-    const size = preFullScreenState.value[key]
-    if (size !== undefined) {
-      panelRef.value?.expand()
-      panelRef.value?.resize(size)
-    }
-  })
-}
-
-function fullScreenPanel(panel: 'canvas' | 'ndv' | 'footer') {
-  fullScreen.value = panel
-  Object.entries(refs).forEach(([key, panelRef]) => {
-    if (panelRef.value) {
-      preFullScreenState.value[key] = panelRef.value.getSize()
-    }
-  })
-  Object.entries(refs).forEach(([key, panelRef]) => {
-    if (key === panel) {
-      panelRef.value?.expand()
-      panelRef.value?.resize(100)
-    } else {
-      panelRef.value?.collapse()
-      panelRef.value?.resize(0)
-    }
-  })
-}
-
-function toggleFullScreen(panel: 'canvas' | 'ndv' | 'footer') {
-  if (fullScreen.value === panel) {
-    fullScreen.value = null
-    resetPanels()
-  } else {
-    fullScreenPanel(panel)
-  }
-}
+const {
+  panelStates,
+  togglePanelVisibility,
+  currentFullScreenPanel,
+  toggleFullScreen,
+  resetPanels,
+} = useEditorPanels({
+  canvasRef,
+  ndvRef,
+  footerRef,
+})
 </script>
 
 <template>
@@ -70,9 +27,9 @@ function toggleFullScreen(panel: 'canvas' | 'ndv' | 'footer') {
     <nav class="nav"></nav>
     <main class="main">
       <header class="header">
-        <button @click="fullScreenPanel('canvas')">Canvas</button>
-        <button @click="fullScreenPanel('ndv')">NDV</button>
-        <button @click="fullScreenPanel('footer')">Footer</button>
+        <button @click="toggleFullScreen('canvas')">Canvas</button>
+        <button @click="toggleFullScreen('ndv')">NDV</button>
+        <button @click="toggleFullScreen('footer')">Footer</button>
         <button @click="resetPanels()">Reset</button>
       </header>
       <SplitterGroup auto-save-id="editor-1" direction="horizontal">
@@ -93,9 +50,9 @@ function toggleFullScreen(panel: 'canvas' | 'ndv' | 'footer') {
                 <SplitterPanel :default-size="66" id="canvas" ref="canvasRef" collapsible
                   >Canvas</SplitterPanel
                 >
-                <SplitterResizeHandle class="handle" />
+                <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />
                 <SplitterPanel
-                  v-if="!hiddenPanels.has('ndv')"
+                  v-if="panelStates.ndv.isVisible"
                   id="ndv"
                   ref="ndvRef"
                   :default-size="33"
@@ -103,18 +60,30 @@ function toggleFullScreen(panel: 'canvas' | 'ndv' | 'footer') {
                   :min-size="15"
                 >
                   <PanelHeader
-                    :full-screen="fullScreen === 'ndv'"
+                    :full-screen="currentFullScreenPanel === 'ndv'"
                     title="NDV"
                     @toggle-fullscreen="() => toggleFullScreen('ndv')"
-                    @close-panel="() => closePanel('ndv')"
+                    @close-panel="() => togglePanelVisibility('ndv')"
                   />
                 </SplitterPanel>
               </SplitterGroup>
             </SplitterPanel>
-            <SplitterResizeHandle class="handle" />
-            <SplitterPanel id="footer" ref="footerRef" :default-size="33" collapsible :min-size="15"
-              >Footer</SplitterPanel
+            <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />
+            <SplitterPanel
+              v-if="panelStates.ndv.isVisible"
+              id="footer"
+              ref="footerRef"
+              :default-size="33"
+              collapsible
+              :min-size="15"
             >
+              <PanelHeader
+                :full-screen="currentFullScreenPanel === 'footer'"
+                title="Footer"
+                @toggle-fullscreen="() => toggleFullScreen('footer')"
+                @close-panel="() => togglePanelVisibility('footer')"
+              />
+            </SplitterPanel>
           </SplitterGroup>
         </SplitterPanel>
       </SplitterGroup>

@@ -23,21 +23,60 @@ const {
   footerRef,
 })
 
+// Node click handlers
+const handleNodeClick = (nodeId: string) => {
+  const node = nodes.value.find((n) => n.id === nodeId)
+  if (!node) return
+
+  const tabValue = `node-${nodeId}`
+  const tabLabel = node.name
+
+  if (ndvTabs.hasTab(tabValue)) {
+    // Switch to existing tab
+    ndvTabs.setActiveTab(tabValue)
+  } else {
+    // Add new tab
+    ndvTabs.addTab({ value: tabValue, label: tabLabel })
+  }
+
+  // Show NDV panel if hidden
+  if (!panelStates.value.ndv.isVisible) {
+    togglePanelVisibility('ndv')
+  }
+}
+
+const handleNodeDoubleClick = (nodeId: string) => {
+  const node = nodes.value.find((n) => n.id === nodeId)
+  if (!node) return
+
+  const tabValue = `node-${nodeId}`
+  const tabLabel = node.name
+
+  if (ndvTabs.hasTab(tabValue)) {
+    // Switch to existing tab
+    ndvTabs.setActiveTab(tabValue)
+  } else {
+    // Add new tab
+    ndvTabs.addTab({ value: tabValue, label: tabLabel })
+  }
+
+  // Show NDV panel and make it fullscreen
+  if (!panelStates.value.ndv.isVisible) {
+    togglePanelVisibility('ndv')
+  }
+  if (currentFullScreenPanel.value !== 'ndv') {
+    toggleFullScreen('ndv')
+  }
+}
+
 const nodes = ref([
   { id: '1', name: 'Trigger', params: {} },
   { id: '2', name: 'Agent', params: {} },
   { id: '3', name: 'Code', params: {} },
 ])
 
-// Setup tabs for NDV panel
-const ndvTabs = useTabs({
-  tabs: [
-    { value: 'tab1', label: 'Tab1' },
-    { value: 'tab2', label: 'Tab2' },
-    { value: 'tab3', label: 'Tab3' },
-  ],
-  defaultValue: 'tab1',
-})
+// Setup tabs for NDV panel (start empty)
+const ndvTabs = useTabs({})
 
 // Setup tabs for footer panel
 const footerTabs = useTabs({
@@ -78,11 +117,15 @@ const footerTabs = useTabs({
             <SplitterPanel>
               <SplitterGroup auto-save-id="editor-3" direction="horizontal">
                 <SplitterPanel :default-size="66" id="canvas" ref="canvasRef" collapsible>
-                  <FakeNodes :nodes="nodes" />
+                  <FakeNodes
+                    :nodes="nodes"
+                    @node-click="handleNodeClick"
+                    @node-dblclick="handleNodeDoubleClick"
+                  />
                 </SplitterPanel>
                 <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />
                 <SplitterPanel
-                  v-if="panelStates.ndv.isVisible"
+                  v-if="panelStates.ndv.isVisible && ndvTabs.tabs.value.length > 0"
                   id="ndv"
                   ref="ndvRef"
                   :default-size="33"
@@ -93,14 +136,17 @@ const footerTabs = useTabs({
                     position="right"
                     :full-screen="currentFullScreenPanel === 'ndv'"
                     title="NDV"
-                    :tabs="ndvTabs.tabs"
+                    :tabs="ndvTabs.tabs.value"
                     :active-tab="ndvTabs.activeTabValue.value"
                     @toggle-fullscreen="() => toggleFullScreen('ndv')"
                     @close-panel="() => togglePanelVisibility('ndv')"
                     @update:active-tab="ndvTabs.setActiveTab"
                   />
                   <div class="panel-content">
-                    Active NDV Tab: {{ ndvTabs.activeTab.value?.label }}
+                    <div v-if="ndvTabs.activeTab.value">
+                      Node Details: {{ ndvTabs.activeTab.value.label }}
+                    </div>
+                    <div v-else>No node selected</div>
                   </div>
                 </SplitterPanel>
               </SplitterGroup>
@@ -118,7 +164,7 @@ const footerTabs = useTabs({
                 position="bottom"
                 :full-screen="currentFullScreenPanel === 'footer'"
                 title="Footer"
-                :tabs="footerTabs.tabs"
+                :tabs="footerTabs.tabs.value"
                 :active-tab="footerTabs.activeTabValue.value"
                 @toggle-fullscreen="() => toggleFullScreen('footer')"
                 @close-panel="() => togglePanelVisibility('footer')"

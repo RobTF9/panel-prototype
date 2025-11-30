@@ -18,7 +18,7 @@ type Refs = {
 export function useEditorPanels(refs: Refs) {
   const panelStates = ref<Record<PanelId, PanelState>>({
     canvas: { isVisible: true, size: 66, isCollapsed: false },
-    ndv: { isVisible: true, size: 33, isCollapsed: false },
+    ndv: { isVisible: false, size: 33, isCollapsed: false },
     footer: { isVisible: true, size: 33, isCollapsed: false },
   })
 

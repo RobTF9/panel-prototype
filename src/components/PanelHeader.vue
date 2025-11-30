@@ -18,16 +18,12 @@ defineEmits<{
     <h2 class="PanelTitle">{{ title }}</h2>
     <div class="PanelControls">
       <button class="PanelControlButton" @click="$emit('toggle-fullscreen')">
-        <PanelBottom v-if="fullScreen && position === 'bottom'" :stroke-width="1.25" :size="16" />
-        <PanelRight
-          v-else-if="fullScreen && position === 'right'"
-          :stroke-width="1.25"
-          :size="16"
-        />
-        <Scan :size="16" :stroke-width="1.25" v-else />
+        <PanelBottom v-if="fullScreen && position === 'bottom'" :stroke-width="1.5" :size="16" />
+        <PanelRight v-else-if="fullScreen && position === 'right'" :stroke-width="1.5" :size="16" />
+        <Scan :size="16" :stroke-width="1.5" v-else />
       </button>
       <button class="PanelControlButton" @click="$emit('close-panel')">
-        <X :size="16" :stroke-width="1.25" />
+        <X :size="16" :stroke-width="1.5" />
       </button>
     </div>
   </header>

@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import PanelHeader from './components/PanelHeader.vue'
 import { useEditorPanels } from './composables/useEditorPanels'
 import { useTabs } from './composables/useTabs'
+import FakeNodes from './components/FakeNodes.vue'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
@@ -21,6 +22,12 @@ const {
   ndvRef,
   footerRef,
 })
+
+const nodes = ref([
+  { id: '1', name: 'Trigger', params: {} },
+  { id: '2', name: 'Agent', params: {} },
+  { id: '3', name: 'Code', params: {} },
+])
 
 // Setup tabs for NDV panel
 const ndvTabs = useTabs({
@@ -70,9 +77,9 @@ const footerTabs = useTabs({
           <SplitterGroup auto-save-id="editor-2" direction="vertical">
             <SplitterPanel>
               <SplitterGroup auto-save-id="editor-3" direction="horizontal">
-                <SplitterPanel :default-size="66" id="canvas" ref="canvasRef" collapsible
-                  >Canvas</SplitterPanel
-                >
+                <SplitterPanel :default-size="66" id="canvas" ref="canvasRef" collapsible>
+                  <FakeNodes :nodes="nodes" />
+                </SplitterPanel>
                 <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />
                 <SplitterPanel
                   v-if="panelStates.ndv.isVisible"

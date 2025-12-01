@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { ref } from 'vue'
+
 interface FakeNode {
   id: string
   name: string
@@ -9,17 +11,40 @@ defineProps<{
   nodes: FakeNode[]
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'node-dblclick', nodeId: string): void
   (e: 'node-click', nodeId: string): void
 }>()
+
+let clickTimer: ReturnType<typeof setTimeout> | null = null
+
+function handleClick(nodeId: string) {
+  if (clickTimer) {
+    clearTimeout(clickTimer)
+    clickTimer = null
+    return
+  }
+
+  clickTimer = setTimeout(() => {
+    emit('node-click', nodeId)
+    clickTimer = null
+  }, 50)
+}
+
+function handleDoubleClick(nodeId: string) {
+  if (clickTimer) {
+    clearTimeout(clickTimer)
+    clickTimer = null
+  }
+  emit('node-dblclick', nodeId)
+}
 </script>
 
 <template>
   <div class="FakeNodesContainer">
     <div
-      @dblclick="$emit('node-dblclick', node.id)"
-      @click="$emit('node-click', node.id)"
+      @dblclick="handleDoubleClick(node.id)"
+      @click="handleClick(node.id)"
       v-for="node in nodes"
       :key="node.id"
       class="FakeNode"

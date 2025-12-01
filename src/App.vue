@@ -130,6 +130,45 @@ const dropdownItems = computed<DropdownItem[]>(() => {
   }))
 })
 
+// Search state
+const searchQuery = ref('')
+const flattenedItems = computed(() => {
+  if (!searchQuery.value) return []
+  
+  const query = searchQuery.value.toLowerCase()
+  const items: Array<{ id: string; label: string; nodeId: string; paramId?: string }> = []
+  
+  nodes.value.forEach(node => {
+    // Add matching nodes
+    if (node.name.toLowerCase().includes(query)) {
+      items.push({
+        id: `node-${node.id}`,
+        label: node.name,
+        nodeId: node.id
+      })
+    }
+    
+    // Add matching params
+    Object.entries(node.params).forEach(([paramKey]) => {
+      if (paramKey.toLowerCase().includes(query) || node.name.toLowerCase().includes(query)) {
+        items.push({
+          id: `param-${node.id}-${paramKey}`,
+          label: `${node.name} / ${paramKey}`,
+          nodeId: node.id,
+          paramId: paramKey
+        })
+      }
+    })
+  })
+  
+  return items
+})
+
+// Handle search
+const handleSearch = (query: string) => {
+  searchQuery.value = query
+}
+
 // Handle dropdown item clicks
 const handleDropdownItemClick = (nodeId: string, paramKey?: string) => {
   const node = nodes.value.find((n) => n.id === nodeId)
@@ -218,7 +257,9 @@ const handleDropdownItemClick = (nodeId: string, paramKey?: string) => {
                       <ReusableDropdown
                         trigger-label="Add tab"
                         :items="dropdownItems"
+                        :flattened-items="flattenedItems"
                         @item-click="handleDropdownItemClick"
+                        @search="handleSearch"
                         ><Plus :size="14" :stroke-width="1.5"
                       /></ReusableDropdown>
                     </template>

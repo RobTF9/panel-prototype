@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -21,14 +22,25 @@ export interface DropdownSubItem {
   label: string
 }
 
-defineProps<{
+const props = defineProps<{
   items: DropdownItem[]
   triggerLabel: string
+  flattenedItems?: Array<{ id: string; label: string; nodeId?: string; paramId?: string }>
 }>()
 
-defineEmits<{
+const searchValue = ref('')
+const searchInputRef = ref<HTMLInputElement>()
+
+const emit = defineEmits<{
   (e: 'item-click', itemId: string, subItemId?: string): void
+  (e: 'search', query: string): void
 }>()
+
+const handleSearchInput = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  searchValue.value = target.value
+  emit('search', target.value)
+}
 </script>
 
 <template>
@@ -36,33 +48,61 @@ defineEmits<{
     <DropdownMenuTrigger as-child>
       <button class="dropdown-trigger">
         <slot>
-          {{ triggerLabel }}
+          {{ props.triggerLabel }}
         </slot>
       </button>
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
       <DropdownMenuContent class="dropdown-content" :side-offset="5">
-        <template v-for="item in items" :key="item.id">
-          <DropdownMenuSub v-if="item.children && item.children.length > 0">
-            <DropdownMenuSubTrigger class="dropdown-item dropdown-sub-trigger">
-              {{ item.label }}
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal class="dropdown-content">
-              <DropdownMenuSubContent class="dropdown-content">
-                <DropdownMenuItem
-                  v-for="subItem in item.children"
-                  :key="subItem.id"
-                  class="dropdown-item"
-                  @click="$emit('item-click', item.id, subItem.id)"
-                >
-                  {{ subItem.label }}
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-          <DropdownMenuItem v-else class="dropdown-item" @click="$emit('item-click', item.id)">
+        <div class="search-container">
+          <input
+            ref="searchInputRef"
+            type="text"
+            v-model="searchValue"
+            @input="handleSearchInput"
+            @keydown="handleKeyDown"
+            @keydown.stop
+            placeholder="Search..."
+            class="search-input"
+          />
+        </div>
+
+        <!-- Show flattened items when searching -->
+        <template v-if="searchValue && props.flattenedItems">
+          <DropdownMenuItem
+            v-for="item in props.flattenedItems"
+            :key="item.id"
+            class="dropdown-item"
+            @click="emit('item-click', item.nodeId || item.id, item.paramId)"
+          >
             {{ item.label }}
           </DropdownMenuItem>
+        </template>
+
+        <!-- Show hierarchical items when not searching -->
+        <template v-else>
+          <template v-for="item in props.items" :key="item.id">
+            <DropdownMenuSub v-if="item.children && item.children.length > 0">
+              <DropdownMenuSubTrigger class="dropdown-item dropdown-sub-trigger">
+                {{ item.label }}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuPortal class="dropdown-content">
+                <DropdownMenuSubContent class="dropdown-content">
+                  <DropdownMenuItem
+                    v-for="subItem in item.children"
+                    :key="subItem.id"
+                    class="dropdown-item"
+                    @click="emit('item-click', item.id, subItem.id)"
+                  >
+                    {{ subItem.label }}
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+            <DropdownMenuItem v-else class="dropdown-item" @click="emit('item-click', item.id)">
+              {{ item.label }}
+            </DropdownMenuItem>
+          </template>
         </template>
       </DropdownMenuContent>
     </DropdownMenuPortal>
@@ -105,7 +145,8 @@ defineEmits<{
   outline: none;
 }
 
-.dropdown-item:hover {
+.dropdown-item:hover,
+.dropdown-item:focus {
   background-color: #f0f0f0;
 }
 
@@ -113,5 +154,23 @@ defineEmits<{
   content: '›';
   margin-left: auto;
   font-size: 12px;
+}
+
+.search-container {
+  border-bottom: 1px solid #eee;
+  margin-bottom: 4px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 2px;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #007acc;
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   DropdownMenuRoot,
   DropdownMenuTrigger,
@@ -30,21 +30,118 @@ const props = defineProps<{
 
 const searchValue = ref('')
 const searchInputRef = ref<HTMLInputElement>()
+const selectedIndex = ref(-1)
+const isOpen = ref(false)
 
 const emit = defineEmits<{
   (e: 'item-click', itemId: string, subItemId?: string): void
   (e: 'search', query: string): void
 }>()
 
+// Compute all selectable items
+const selectableItems = computed(() => {
+  if (searchValue.value && props.flattenedItems) {
+    return props.flattenedItems
+  }
+
+  const items: Array<{ id: string; label: string; nodeId?: string; paramId?: string }> = []
+  props.items.forEach((item) => {
+    if (item.children && item.children.length > 0) {
+      item.children.forEach((child) => {
+        items.push({
+          id: child.id,
+          label: child.label,
+          nodeId: item.id,
+          paramId: child.id,
+        })
+      })
+    } else {
+      items.push({
+        id: item.id,
+        label: item.label,
+        nodeId: item.id,
+      })
+    }
+  })
+  return items
+})
+
 const handleSearchInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   searchValue.value = target.value
+  selectedIndex.value = -1 // Reset selection
   emit('search', target.value)
 }
+
+const handleGlobalKeyDown = (event: KeyboardEvent) => {
+  console.log('Global keydown:', event.key)
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    if (!isOpen.value) return
+    selectedIndex.value = (selectedIndex.value + 1) % selectableItems.value.length
+    return
+  }
+
+  if (event.key === 'ArrowRight' || event.key === 'Enter') {
+    event.preventDefault()
+    if (!isOpen.value) return
+    return
+  }
+
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    if (!isOpen.value) return
+    isOpen.value = false
+    return
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    if (!isOpen.value) return
+    selectedIndex.value =
+      (selectedIndex.value - 1 + selectableItems.value.length) % selectableItems.value.length
+    return
+  }
+
+  if (event.key === 'Backspace') {
+    event.preventDefault()
+    if (!isOpen.value) return
+    searchValue.value = searchValue.value.slice(0, -1)
+    return
+  }
+  searchValue.value = searchValue.value + event.key || ''
+  if (!isOpen.value) return
+
+  console.log('Not open:', event.key)
+}
+
+const handleOpenChange = (open: boolean) => {
+  isOpen.value = open
+  if (open) {
+    selectedIndex.value = -1
+    // Auto-focus search input
+    setTimeout(() => {
+      if (searchInputRef.value) {
+        searchInputRef.value.focus()
+      }
+    }, 50)
+  } else {
+    searchValue.value = ''
+    emit('search', '')
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleGlobalKeyDown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalKeyDown)
+})
 </script>
 
 <template>
-  <DropdownMenuRoot>
+  <DropdownMenuRoot @open-change="handleOpenChange">
     <DropdownMenuTrigger as-child>
       <button class="dropdown-trigger">
         <slot>
@@ -60,7 +157,6 @@ const handleSearchInput = (event: Event) => {
             type="text"
             v-model="searchValue"
             @input="handleSearchInput"
-            @keydown="handleKeyDown"
             @keydown.stop
             placeholder="Search..."
             class="search-input"
@@ -70,9 +166,9 @@ const handleSearchInput = (event: Event) => {
         <!-- Show flattened items when searching -->
         <template v-if="searchValue && props.flattenedItems">
           <DropdownMenuItem
-            v-for="item in props.flattenedItems"
+            v-for="(item, index) in props.flattenedItems"
             :key="item.id"
-            class="dropdown-item"
+            :class="['dropdown-item', { 'dropdown-item-selected': selectedIndex === index }]"
             @click="emit('item-click', item.nodeId || item.id, item.paramId)"
           >
             {{ item.label }}
@@ -148,6 +244,11 @@ const handleSearchInput = (event: Event) => {
 .dropdown-item:hover,
 .dropdown-item:focus {
   background-color: #f0f0f0;
+}
+
+.dropdown-item-selected {
+  background-color: #007acc !important;
+  color: white;
 }
 
 .dropdown-sub-trigger::after {

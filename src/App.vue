@@ -4,10 +4,10 @@ import { ref, computed } from 'vue'
 import PanelHeader from './components/PanelHeader.vue'
 import { useEditorPanels } from './composables/useEditorPanels'
 import { useTabs } from './composables/useTabs'
-import FakeNodes from './components/FakeNodes.vue'
 import ReusableDropdown from './components/ReusableDropdown.vue'
 import type { DropdownItem } from './components/ReusableDropdown.vue'
 import { Plus } from 'lucide-vue-next'
+import FakeCanvas from './components/FakeCanvas.vue'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
@@ -134,20 +134,20 @@ const dropdownItems = computed<DropdownItem[]>(() => {
 const searchQuery = ref('')
 const flattenedItems = computed(() => {
   if (!searchQuery.value) return []
-  
+
   const query = searchQuery.value.toLowerCase()
   const items: Array<{ id: string; label: string; nodeId: string; paramId?: string }> = []
-  
-  nodes.value.forEach(node => {
+
+  nodes.value.forEach((node) => {
     // Add matching nodes
     if (node.name.toLowerCase().includes(query)) {
       items.push({
         id: `node-${node.id}`,
         label: node.name,
-        nodeId: node.id
+        nodeId: node.id,
       })
     }
-    
+
     // Add matching params
     Object.entries(node.params).forEach(([paramKey]) => {
       if (paramKey.toLowerCase().includes(query) || node.name.toLowerCase().includes(query)) {
@@ -155,12 +155,12 @@ const flattenedItems = computed(() => {
           id: `param-${node.id}-${paramKey}`,
           label: `${node.name} / ${paramKey}`,
           nodeId: node.id,
-          paramId: paramKey
+          paramId: paramKey,
         })
       }
     })
   })
-  
+
   return items
 })
 
@@ -228,7 +228,7 @@ const handleDropdownItemClick = (nodeId: string, paramKey?: string) => {
             <SplitterPanel>
               <SplitterGroup auto-save-id="editor-3" direction="horizontal">
                 <SplitterPanel :default-size="66" id="canvas" ref="canvasRef" collapsible>
-                  <FakeNodes
+                  <FakeCanvas
                     :nodes="nodes"
                     @node-click="handleNodeClick"
                     @node-dblclick="handleNodeDoubleClick"

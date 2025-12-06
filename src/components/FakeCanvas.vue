@@ -14,7 +14,9 @@ import {
   UserCheck,
   StickyNote,
   Search,
+  Eye,
 } from 'lucide-vue-next'
+import ReusableDropdown from './ReusableDropdown.vue'
 
 interface FakeNode {
   id: string
@@ -61,12 +63,12 @@ function handleDoubleClick(nodeId: string) {
 <template>
   <div class="FakeNodesContainer">
     <aside class="TopLeft Controls">
-      <button class="ControlButton">
+      <button class="ControlButton" @click="$emit('left-drawer-toggle')">
         <Sparkles />
       </button>
     </aside>
     <aside class="TopRight Controls">
-      <button class="ControlButton">
+      <button class="ControlButton" @click="$emit('right-drawer-toggle')">
         <PanelRight />
       </button>
     </aside>
@@ -75,9 +77,23 @@ function handleDoubleClick(nodeId: string) {
         <PlusIcon />
         <p>50%</p>
         <MinusIcon />
+        <span class="Divider" />
+        <ReusableDropdown
+          trigger-label="View options"
+          no-search
+          :items="[
+            { id: 'heat-map', label: 'Heatmap' },
+            { id: 'tidy', label: 'Tidy up' },
+            { id: 'reset', label: 'Reset' },
+          ]"
+        >
+          <Eye />
+        </ReusableDropdown>
       </div>
       <div class="ControlGroup">
-        <button class="ExecuteButton">Execute workflow</button>
+        <button class="ExecuteButton" @click="$emit('bottom-drawer-toggle')">
+          Execute workflow
+        </button>
         <span class="Divider" />
         <Zap />
         <Bot />
@@ -90,7 +106,7 @@ function handleDoubleClick(nodeId: string) {
         <span class="Divider" />
         <Search />
       </div>
-      <button class="ControlButton">
+      <button class="ControlButton" @click="$emit('bottom-drawer-toggle')">
         <PanelBottom />
       </button>
     </aside>

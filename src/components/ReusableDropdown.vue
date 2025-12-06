@@ -25,6 +25,7 @@ export interface DropdownSubItem {
 const props = defineProps<{
   items: DropdownItem[]
   triggerLabel: string
+  noSearch?: boolean
   flattenedItems?: Array<{ id: string; label: string; nodeId?: string; paramId?: string }>
 }>()
 
@@ -151,7 +152,7 @@ onUnmounted(() => {
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
       <DropdownMenuContent class="dropdown-content" :side-offset="5">
-        <div class="search-container">
+        <div v-if="!noSearch" class="search-container">
           <input
             ref="searchInputRef"
             type="text"
@@ -211,9 +212,10 @@ onUnmounted(() => {
   border: none;
   cursor: pointer;
   padding: 0;
-  width: 16px;
-  height: 16px;
   color: grey;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dropdown-trigger:hover {

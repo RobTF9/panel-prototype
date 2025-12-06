@@ -200,6 +200,15 @@ const handleDropdownItemClick = (nodeId: string, paramKey?: string) => {
     togglePanelVisibility('ndv')
   }
 }
+
+function toggleAssistantPanel() {
+  console.log('Toggling assistant panel')
+  if (assistantRef.value?.isExpanded) {
+    assistantRef.value.collapse()
+  } else {
+    assistantRef.value?.expand()
+  }
+}
 </script>
 
 <template>
@@ -229,6 +238,9 @@ const handleDropdownItemClick = (nodeId: string, paramKey?: string) => {
               <SplitterGroup auto-save-id="editor-3" direction="horizontal">
                 <SplitterPanel :default-size="66" id="canvas" ref="canvasRef" collapsible>
                   <FakeCanvas
+                    @left-drawer-toggle="toggleAssistantPanel"
+                    @right-drawer-toggle="togglePanelVisibility('ndv')"
+                    @bottom-drawer-toggle="togglePanelVisibility('footer')"
                     :nodes="nodes"
                     @node-click="handleNodeClick"
                     @node-dblclick="handleNodeDoubleClick"

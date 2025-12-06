@@ -38,6 +38,8 @@ export function useEditorPanels(refs: Refs) {
     const state = panelStates.value[panelId]
     state.isVisible = !state.isVisible
 
+    console.log(`Toggling visibility for panel ${panelId}: ${state.isVisible}`)
+
     const panelRef = refMap[panelId]
     if (state.isVisible) {
       panelRef.value?.expand()

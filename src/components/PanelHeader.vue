@@ -9,24 +9,32 @@ defineProps<{
   position: 'bottom' | 'right'
   tabs?: Tab[]
   activeTab?: string
+  showTabActions?: boolean
 }>()
 
 defineEmits<{
   (e: 'toggle-fullscreen'): void
   (e: 'close-panel'): void
   (e: 'update:activeTab', value: string): void
+  (e: 'close-tab', value: string): void
+  (e: 'toggle-pin', value: string): void
 }>()
 </script>
 
 <template>
   <div class="PanelHeaderContainer">
     <header class="PanelHeader">
-      <TabHeader
-        v-if="tabs && tabs.length > 0"
-        :tabs="tabs"
-        :active-tab="activeTab || ''"
-        @update:active-tab="$emit('update:activeTab', $event)"
-      />
+      <div class="TabsContainer">
+        <TabHeader
+          v-if="tabs && tabs.length > 0"
+          :tabs="tabs"
+          :active-tab="activeTab || ''"
+          :show-pin-close="showTabActions"
+          @update:active-tab="$emit('update:activeTab', $event)"
+          @close-tab="$emit('close-tab', $event)"
+          @toggle-pin="$emit('toggle-pin', $event)"
+        />
+      </div>
 
       <div class="PanelControls">
         <slot name="controls"></slot>
@@ -54,10 +62,32 @@ defineEmits<{
 
 .PanelHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   max-height: 33px;
   background-color: #f0f0f0;
+  position: relative;
+}
+
+.TabsContainer {
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.TabsContainer :deep(.TabsRoot) {
+  overflow: hidden;
+}
+
+.TabsContainer :deep(.TabsList) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-right: 20px;
+}
+
+.TabsContainer :deep(.TabsList)::-webkit-scrollbar {
+  display: none;
 }
 
 .PanelTitle {
@@ -68,6 +98,10 @@ defineEmits<{
   display: flex;
   gap: 8px;
   padding: 8px;
+  flex-shrink: 0;
+  background-color: #f0f0f0;
+  position: relative;
+  z-index: 1;
 }
 
 .PanelControlButton {

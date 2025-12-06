@@ -26,6 +26,7 @@ const emit = defineEmits<{
   (e: 'left-drawer-toggle'): void
   (e: 'right-drawer-toggle'): void
   (e: 'bottom-drawer-toggle'): void
+  (e: 'canvas-click'): void
   (
     e: 'node-added',
     node: { id: string; name: string; params: Record<string, { type: string; value: string }> },
@@ -103,10 +104,17 @@ function handleDoubleClick(nodeId: string) {
   }
   emit('node-dblclick', nodeId)
 }
+
+function handleCanvasClick(event: Event) {
+  // Only emit canvas-click if the target is the canvas container itself
+  if (event.target === event.currentTarget) {
+    emit('canvas-click')
+  }
+}
 </script>
 
 <template>
-  <div class="FakeNodesContainer">
+  <div class="FakeNodesContainer" @click="handleCanvasClick">
     <aside class="TopLeft Controls">
       <button class="ControlButton" @click="$emit('left-drawer-toggle')">
         <Sparkles />

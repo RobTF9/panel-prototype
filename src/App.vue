@@ -38,8 +38,8 @@ const handleNodeClick = (nodeId: string) => {
     // Switch to existing tab
     ndvTabs.setActiveTab(tabValue)
   } else {
-    // Add new tab
-    ndvTabs.addTab({ value: tabValue, label: tabLabel })
+    // Add new tab with replace unpinned behavior
+    ndvTabs.addTab({ value: tabValue, label: tabLabel, isPinned: false }, true)
   }
 
   // Show NDV panel if hidden
@@ -191,8 +191,8 @@ const handleDropdownItemClick = (nodeId: string, paramKey?: string) => {
     // Switch to existing tab
     ndvTabs.setActiveTab(tabValue)
   } else {
-    // Add new tab
-    ndvTabs.addTab({ value: tabValue, label: tabLabel })
+    // Add new tab with replace unpinned behavior
+    ndvTabs.addTab({ value: tabValue, label: tabLabel, isPinned: false }, true)
   }
 
   // Show NDV panel if hidden
@@ -212,6 +212,26 @@ function toggleAssistantPanel() {
 
 function handleNodeAdded(node: FakeNode) {
   nodes.value.push(node)
+}
+
+// Handle canvas click to close NDV
+function handleCanvasClick() {
+  if (panelStates.value.ndv.isVisible && ndvTabs.tabs.value.length > 0) {
+    togglePanelVisibility('ndv')
+  }
+}
+
+// Handle tab actions
+function handleTabClose(tabValue: string) {
+  ndvTabs.removeTab(tabValue)
+  // Close NDV panel if no tabs remain
+  if (ndvTabs.tabs.value.length === 0 && panelStates.value.ndv.isVisible) {
+    togglePanelVisibility('ndv')
+  }
+}
+
+function handleTabTogglePin(tabValue: string) {
+  ndvTabs.togglePin(tabValue)
 }
 </script>
 
@@ -249,6 +269,7 @@ function handleNodeAdded(node: FakeNode) {
                     @node-click="handleNodeClick"
                     @node-dblclick="handleNodeDoubleClick"
                     @node-added="handleNodeAdded"
+                    @canvas-click="handleCanvasClick"
                   />
                 </SplitterPanel>
                 <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />
@@ -266,9 +287,12 @@ function handleNodeAdded(node: FakeNode) {
                     title="NDV"
                     :tabs="ndvTabs.tabs.value"
                     :active-tab="ndvTabs.activeTabValue.value"
+                    :show-tab-actions="true"
                     @toggle-fullscreen="() => toggleFullScreen('ndv')"
                     @close-panel="() => togglePanelVisibility('ndv')"
                     @update:active-tab="ndvTabs.setActiveTab"
+                    @close-tab="handleTabClose"
+                    @toggle-pin="handleTabTogglePin"
                   >
                     <template #controls>
                       <ReusableDropdown
@@ -305,6 +329,7 @@ function handleNodeAdded(node: FakeNode) {
                 title="Footer"
                 :tabs="footerTabs.tabs.value"
                 :active-tab="footerTabs.activeTabValue.value"
+                :show-tab-actions="false"
                 @toggle-fullscreen="() => toggleFullScreen('footer')"
                 @close-panel="() => togglePanelVisibility('footer')"
                 @update:active-tab="footerTabs.setActiveTab"

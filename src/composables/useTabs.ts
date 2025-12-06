@@ -4,6 +4,7 @@ export interface Tab {
   value: string
   label: string
   content?: unknown
+  isPinned?: boolean
 }
 
 export interface TabsConfig {
@@ -25,10 +26,21 @@ export function useTabs(config: TabsConfig = {}) {
     }
   }
 
-  const addTab = (tab: Tab) => {
+  const addTab = (tab: Tab, replaceUnpinned = false) => {
     const existingTab = tabs.value.find(t => t.value === tab.value)
     if (!existingTab) {
-      tabs.value.push(tab)
+      if (replaceUnpinned) {
+        // Find first unpinned tab and replace it
+        const unpinnedIndex = tabs.value.findIndex(t => !t.isPinned)
+        if (unpinnedIndex > -1) {
+          tabs.value[unpinnedIndex] = { ...tab, isPinned: false }
+        } else {
+          // No unpinned tabs found, add new one
+          tabs.value.push({ ...tab, isPinned: false })
+        }
+      } else {
+        tabs.value.push(tab)
+      }
     }
     activeTabValue.value = tab.value
     return existingTab ? false : true
@@ -55,6 +67,27 @@ export function useTabs(config: TabsConfig = {}) {
   const hasTab = (value: string) => {
     return tabs.value.some(tab => tab.value === value)
   }
+
+  const togglePin = (value: string) => {
+    const tab = tabs.value.find(t => t.value === value)
+    if (tab) {
+      tab.isPinned = !tab.isPinned
+    }
+  }
+
+  const pinTab = (value: string) => {
+    const tab = tabs.value.find(t => t.value === value)
+    if (tab) {
+      tab.isPinned = true
+    }
+  }
+
+  const unpinTab = (value: string) => {
+    const tab = tabs.value.find(t => t.value === value)
+    if (tab) {
+      tab.isPinned = false
+    }
+  }
   
   return {
     tabs,
@@ -63,6 +96,9 @@ export function useTabs(config: TabsConfig = {}) {
     setActiveTab,
     addTab,
     removeTab,
-    hasTab
+    hasTab,
+    togglePin,
+    pinTab,
+    unpinTab
   }
 }

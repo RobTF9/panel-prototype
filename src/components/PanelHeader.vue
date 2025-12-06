@@ -10,6 +10,8 @@ defineProps<{
   tabs?: Tab[]
   activeTab?: string
   showTabActions?: boolean
+  showFullscreenButton?: boolean
+  isMaximized?: boolean
 }>()
 
 defineEmits<{
@@ -38,10 +40,15 @@ defineEmits<{
 
       <div class="PanelControls">
         <slot name="controls"></slot>
-        <button class="PanelControlButton" @click="$emit('toggle-fullscreen')">
-          <PanelBottom v-if="fullScreen && position === 'bottom'" :stroke-width="1.5" :size="16" />
+        <button 
+          v-if="showFullscreenButton !== false"
+          class="PanelControlButton" 
+          @click="$emit('toggle-fullscreen')"
+        >
+          <!-- Show alternate icon when maximized (but not fullscreen) -->
+          <PanelBottom v-if="(fullScreen || isMaximized) && position === 'bottom'" :stroke-width="1.5" :size="16" />
           <PanelRight
-            v-else-if="fullScreen && position === 'right'"
+            v-else-if="(fullScreen || isMaximized) && position === 'right'"
             :stroke-width="1.5"
             :size="16"
           />

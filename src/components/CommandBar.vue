@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick, watch, type Component } from 'vue'
 import { Search } from 'lucide-vue-next'
 import { fakeNodes, type FakeNode } from '../fake-nodes'
+import { Cog, Bot, GitBranch, Globe, User, Zap, Dot } from 'lucide-vue-next'
 
 const props = defineProps<{
   visible: boolean
@@ -23,42 +24,54 @@ const categories = [
     name: 'AI',
     description: 'Artificial Intelligence and ML tools',
     count: fakeNodes.filter((n) => n.category === 'AI').length,
+    icon: Bot,
   },
   {
     id: 'Core',
     name: 'Core',
     description: 'HTTP requests, code execution, webhooks',
     count: fakeNodes.filter((n) => n.category === 'Core').length,
+    icon: Cog,
   },
   {
     id: 'Flow',
     name: 'Flow',
     description: 'Conditional logic and loops',
     count: fakeNodes.filter((n) => n.category === 'Flow').length,
+    icon: GitBranch,
   },
   {
     id: 'App',
     name: 'App',
     description: 'Third-party app integrations',
     count: fakeNodes.filter((n) => n.category === 'App').length,
+    icon: Globe,
   },
   {
     id: 'Human in the loop',
     name: 'Human in the loop',
     description: 'Manual review and approval',
     count: fakeNodes.filter((n) => n.category === 'Human in the loop').length,
+    icon: User,
   },
   {
     id: 'Triggers',
     name: 'Triggers',
     description: 'Workflow triggers and events',
     count: fakeNodes.filter((n) => n.category === 'Triggers').length,
+    icon: Zap,
   },
 ]
 
 const isSearching = computed(() => searchQuery.value.trim().length > 0)
 
-type CategoryData = { id: string; name: string; description: string; count: number }
+type CategoryData = {
+  id: string
+  name: string
+  description: string
+  count: number
+  icon: Component
+}
 type DisplayItem = { type: 'category'; data: CategoryData } | { type: 'node'; data: FakeNode }
 
 const displayItems = computed((): DisplayItem[] => {
@@ -129,18 +142,6 @@ function resetToCategories() {
   selectedIndex.value = 0
 }
 
-function getCategoryIcon(category: string) {
-  const icons: Record<string, string> = {
-    AI: '🤖',
-    Core: '⚙️',
-    Flow: '🔀',
-    App: '📱',
-    'Human in the loop': '👤',
-    Triggers: '⚡',
-  }
-  return icons[category] || '📦'
-}
-
 // Watch for changes that should reset selection
 watch([searchQuery, selectedCategory], () => {
   selectedIndex.value = 0
@@ -170,7 +171,7 @@ watch(
             ref="searchInputRef"
             v-model="searchQuery"
             type="text"
-            :placeholder="selectedCategory ? `Search in ${selectedCategory}...` : 'Search nodes...'"
+            placeholder="Add node"
             class="search-input"
             @keydown="handleInputKeyDown"
           />
@@ -191,7 +192,9 @@ watch(
         >
           <div v-if="item.type === 'category'" class="category-item">
             <div class="category-header">
-              <span class="category-icon">{{ getCategoryIcon(item.data.id) }}</span>
+              <span class="category-icon">
+                <component :is="item.data.icon" :size="20" />
+              </span>
               <div class="category-info">
                 <span class="category-name">{{ item.data.name }}</span>
                 <span class="category-count">{{ (item.data as CategoryData).count }} nodes</span>
@@ -202,7 +205,9 @@ watch(
 
           <div v-else class="node-item">
             <div class="node-header">
-              <span class="node-icon">{{ getCategoryIcon((item.data as FakeNode).category) }}</span>
+              <span class="node-icon">
+                <SquareX />
+              </span>
               <div class="node-info">
                 <span class="node-name">{{ item.data.name }}</span>
                 <span class="node-category">{{ (item.data as FakeNode).category }}</span>
@@ -304,7 +309,6 @@ watch(
 
 .item.selected {
   background-color: #e0f2fe;
-  border: 1px solid #0891b2;
 }
 
 .category-item,

@@ -21,12 +21,18 @@ const ndvPanelElement = ref<HTMLElement>()
 
 const isWideLayout = computed(() => ndvPanelWidth.value > 850)
 
+// Track panel maximized states
+const isNdvMaximized = computed(() => isPanelMaximized('ndv'))
+const isFooterMaximized = computed(() => isPanelMaximized('footer'))
+
 const {
   panelStates,
   togglePanelVisibility,
   currentFullScreenPanel,
   toggleFullScreen,
   resetPanels,
+  isPanelMaximized,
+  resetPanelSize,
 } = useEditorPanels({
   canvasRef,
   ndvRef,
@@ -112,6 +118,15 @@ const nodes = ref<FakeNode[]>([
 
 // Setup tabs for NDV panel (start empty)
 const ndvTabs = useTabs({})
+
+// Setup tabs for assistant panel
+const assistantTabs = useTabs({
+  tabs: [
+    { value: 'assistant', label: 'Assistant' },
+    { value: 'setup', label: 'Setup' },
+  ],
+  defaultValue: 'assistant',
+})
 
 // Setup tabs for footer panel
 const footerTabs = useTabs({
@@ -380,6 +395,23 @@ onUnmounted(() => {
     resizeObserver.disconnect()
   }
 })
+
+// Handle header button clicks for NDV and footer panels
+function handleNdvHeaderAction() {
+  if (isNdvMaximized.value) {
+    resetPanelSize('ndv')
+  } else {
+    toggleFullScreen('ndv')
+  }
+}
+
+function handleFooterHeaderAction() {
+  if (isFooterMaximized.value) {
+    resetPanelSize('footer')
+  } else {
+    toggleFullScreen('footer')
+  }
+}
 </script>
 
 <template>
@@ -400,8 +432,27 @@ onUnmounted(() => {
           :default-size="20"
           collapsible
           :min-size="15"
-          >Assistant</SplitterPanel
         >
+          <PanelHeader
+            position="right"
+            :full-screen="false"
+            title="Assistant"
+            :tabs="assistantTabs.tabs.value"
+            :active-tab="assistantTabs.activeTabValue.value"
+            :show-tab-actions="false"
+            :show-fullscreen-button="false"
+            @close-panel="toggleAssistantPanel"
+            @update:active-tab="assistantTabs.setActiveTab"
+          />
+          <div class="panel-content">
+            <div v-if="assistantTabs.activeTabValue.value === 'assistant'">
+              <p>Assistant content will go here</p>
+            </div>
+            <div v-else-if="assistantTabs.activeTabValue.value === 'setup'">
+              <p>Setup configuration will go here</p>
+            </div>
+          </div>
+        </SplitterPanel>
         <SplitterResizeHandle class="handle" />
         <SplitterPanel>
           <SplitterGroup auto-save-id="editor-2" direction="vertical">
@@ -433,11 +484,13 @@ onUnmounted(() => {
                     <PanelHeader
                       position="right"
                       :full-screen="currentFullScreenPanel === 'ndv'"
+                      :is-maximized="isNdvMaximized"
                       title="NDV"
                       :tabs="ndvTabs.tabs.value"
                       :active-tab="ndvTabs.activeTabValue.value"
                       :show-tab-actions="true"
-                      @toggle-fullscreen="() => toggleFullScreen('ndv')"
+                      :show-fullscreen-button="true"
+                      @toggle-fullscreen="handleNdvHeaderAction"
                       @close-panel="() => togglePanelVisibility('ndv')"
                       @update:active-tab="ndvTabs.setActiveTab"
                       @close-tab="handleTabClose"
@@ -578,11 +631,13 @@ onUnmounted(() => {
               <PanelHeader
                 position="bottom"
                 :full-screen="currentFullScreenPanel === 'footer'"
+                :is-maximized="isFooterMaximized"
                 title="Footer"
                 :tabs="footerTabs.tabs.value"
                 :active-tab="footerTabs.activeTabValue.value"
                 :show-tab-actions="false"
-                @toggle-fullscreen="() => toggleFullScreen('footer')"
+                :show-fullscreen-button="true"
+                @toggle-fullscreen="handleFooterHeaderAction"
                 @close-panel="() => togglePanelVisibility('footer')"
                 @update:active-tab="footerTabs.setActiveTab"
               />

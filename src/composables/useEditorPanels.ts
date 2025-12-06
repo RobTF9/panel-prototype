@@ -123,6 +123,25 @@ export function useEditorPanels(refs: Refs) {
     })
   }
 
+  // Check if a panel is at 100% size (maximized but not fullscreen)
+  function isPanelMaximized(panelId: PanelId): boolean {
+    const panelRef = refMap[panelId]
+    if (!panelRef.value) return false
+    
+    const currentSize = panelRef.value.getSize()
+    return currentSize >= 99 && !isFullScreen.value
+  }
+
+  // Reset panel to default size
+  function resetPanelSize(panelId: PanelId) {
+    const state = panelStates.value[panelId]
+    const panelRef = refMap[panelId]
+    
+    if (panelRef.value) {
+      panelRef.value.resize(state.size)
+    }
+  }
+
   return {
     panelStates,
     isFullScreen,
@@ -130,5 +149,7 @@ export function useEditorPanels(refs: Refs) {
     togglePanelVisibility,
     toggleFullScreen,
     resetPanels,
+    isPanelMaximized,
+    resetPanelSize,
   }
 }

@@ -77,7 +77,7 @@ const handleSearchInput = (event: Event) => {
 const handleGlobalKeyDown = (event: KeyboardEvent) => {
   // Only handle events when dropdown is open
   if (!isOpen.value) return
-  
+
   console.log('Global keydown:', event.key)
   if (event.key === 'ArrowDown') {
     event.preventDefault()
@@ -139,7 +139,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <DropdownMenuRoot @open-change="handleOpenChange">
+  <DropdownMenuRoot modal @open-change="handleOpenChange">
     <DropdownMenuTrigger as-child>
       <button class="dropdown-trigger">
         <slot>

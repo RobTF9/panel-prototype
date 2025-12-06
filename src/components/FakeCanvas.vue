@@ -10,14 +10,15 @@ import {
 } from 'lucide-vue-next'
 import ReusableDropdown from './ReusableDropdown.vue'
 import CommandBar from './CommandBar.vue'
+import NodeActions from './NodeActions.vue'
 import { type FakeNode } from '../fake-nodes'
 import { ref, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps<{
-  nodes: FakeNode[]
+  nodes: any[]
 }>()
 
-const canvasNodes = ref<FakeNode[]>([...props.nodes])
+const canvasNodes = ref<any[]>([...props.nodes])
 const showCommandBar = ref(false)
 
 const emit = defineEmits<{
@@ -27,6 +28,7 @@ const emit = defineEmits<{
   (e: 'right-drawer-toggle'): void
   (e: 'bottom-drawer-toggle'): void
   (e: 'canvas-click'): void
+  (e: 'node-action', action: string, nodeId: string, paramKey?: string): void
   (
     e: 'node-added',
     node: { id: string; name: string; params: Record<string, { type: string; value: string }> },
@@ -111,6 +113,29 @@ function handleCanvasClick(event: Event) {
     emit('canvas-click')
   }
 }
+
+function handleNodeAction(action: string, nodeId: string, paramKey?: string) {
+  emit('node-action', action, nodeId, paramKey)
+}
+
+// Get node params in the correct format for NodeActions
+function getNodeParams(node: any): Record<string, { type: string; value: string }> {
+  // Check if node.params is already in the App.vue format (object) or FakeNode format (array)
+  if (Array.isArray(node.params)) {
+    // FakeNode format - convert array to object
+    const result: Record<string, { type: string; value: string }> = {}
+    node.params.forEach((param: any) => {
+      result[param.name] = {
+        type: param.type,
+        value: param.default?.toString() || '',
+      }
+    })
+    return result
+  } else {
+    // Already in App.vue format
+    return node.params as Record<string, { type: string; value: string }>
+  }
+}
 </script>
 
 <template>
@@ -164,6 +189,12 @@ function handleCanvasClick(event: Event) {
       class="FakeNode"
     >
       <h3>{{ node.name }}</h3>
+      <NodeActions 
+        :node-id="node.id"
+        :node-name="node.name"
+        :node-params="getNodeParams(node)"
+        @action-click="handleNodeAction"
+      />
     </div>
 
     <CommandBar
@@ -190,6 +221,7 @@ function handleCanvasClick(event: Event) {
 }
 
 .FakeNode {
+  position: relative;
   cursor: pointer;
   background-color: #fff;
   border: 1px solid #ccc;

@@ -8,6 +8,7 @@ import ReusableDropdown from './components/ReusableDropdown.vue'
 import type { DropdownItem } from './components/ReusableDropdown.vue'
 import { Plus } from 'lucide-vue-next'
 import FakeCanvas from './components/FakeCanvas.vue'
+import ParameterInput from './components/ParameterInput.vue'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
@@ -233,6 +234,99 @@ function handleTabClose(tabValue: string) {
 function handleTabTogglePin(tabValue: string) {
   ndvTabs.togglePin(tabValue)
 }
+
+// Get current node data and param info for active tab
+const currentTabInfo = computed(() => {
+  const activeTab = ndvTabs.activeTab.value
+  if (!activeTab) return null
+
+  const parts = activeTab.value.split('-')
+  const nodeId = parts[1]
+  const node = nodes.value.find((n) => n.id === nodeId)
+  
+  if (!node) return null
+
+  // Check if this is a parameter tab (format: "node-{id}-param-{param}")
+  if (parts.length === 4 && parts[2] === 'param') {
+    const paramKey = parts[3]
+    return {
+      type: 'parameter',
+      node,
+      paramKey,
+      paramValue: node.params[paramKey]?.value || ''
+    }
+  }
+  
+  // Otherwise it's a node tab
+  return {
+    type: 'node',
+    node,
+    parameters: Object.entries(node.params).map(([key, param]) => ({
+      key,
+      type: param.type,
+      value: param.value,
+    }))
+  }
+})
+
+// Backward compatibility - keep these for existing code
+const currentNode = computed(() => {
+  const info = currentTabInfo.value
+  return info?.node || null
+})
+
+const currentParameters = computed(() => {
+  const info = currentTabInfo.value
+  return info?.type === 'node' ? info.parameters : []
+})
+
+// Handle parameter updates
+function handleParameterUpdate(nodeId: string, paramKey: string, value: string) {
+  const node = nodes.value.find((n) => n.id === nodeId)
+  if (node && node.params[paramKey]) {
+    node.params[paramKey].value = value
+  }
+}
+
+// Handle single parameter update (for parameter-focused tabs)
+function handleSingleParameterUpdate(value: string) {
+  const info = currentTabInfo.value
+  if (info?.type === 'parameter') {
+    handleParameterUpdate(info.node.id, info.paramKey, value)
+  }
+}
+
+// Handle parameter focus (create parameter-specific tab)
+function handleParameterFocus(nodeId: string, paramKey: string) {
+  const node = nodes.value.find((n) => n.id === nodeId)
+  if (!node) return
+
+  const tabValue = `node-${nodeId}-param-${paramKey}`
+  const tabLabel = `${node.name} / ${paramKey}`
+
+  if (ndvTabs.hasTab(tabValue)) {
+    // Switch to existing tab
+    ndvTabs.setActiveTab(tabValue)
+  } else {
+    // Add new parameter tab
+    ndvTabs.addTab({ value: tabValue, label: tabLabel, isPinned: false })
+  }
+  
+  // Show NDV panel if hidden
+  if (!panelStates.value.ndv.isVisible) {
+    togglePanelVisibility('ndv')
+  }
+}
+
+// Handle node actions from canvas
+function handleNodeAction(action: string, nodeId: string, paramKey?: string) {
+  if (action === 'parameter' && paramKey) {
+    handleParameterFocus(nodeId, paramKey)
+  } else {
+    // Handle other dummy actions
+    console.log(`Action: ${action}, Node: ${nodeId}`)
+  }
+}
 </script>
 
 <template>
@@ -270,6 +364,7 @@ function handleTabTogglePin(tabValue: string) {
                     @node-dblclick="handleNodeDoubleClick"
                     @node-added="handleNodeAdded"
                     @canvas-click="handleCanvasClick"
+                    @node-action="handleNodeAction"
                   />
                 </SplitterPanel>
                 <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />
@@ -294,22 +389,31 @@ function handleTabTogglePin(tabValue: string) {
                     @close-tab="handleTabClose"
                     @toggle-pin="handleTabTogglePin"
                   >
-                    <template #controls>
-                      <ReusableDropdown
-                        trigger-label="Add tab"
-                        :items="dropdownItems"
-                        :flattened-items="flattenedItems"
-                        @item-click="handleDropdownItemClick"
-                        @search="handleSearch"
-                        ><Plus :size="14" :stroke-width="1.5"
-                      /></ReusableDropdown>
-                    </template>
                   </PanelHeader>
                   <div class="panel-content">
-                    <div v-if="ndvTabs.activeTab.value">
-                      Node Details: {{ ndvTabs.activeTab.value.label }}
+                    <!-- Parameter-focused view -->
+                    <div v-if="currentTabInfo?.type === 'parameter'" class="single-parameter-view">
+                      <textarea
+                        :value="currentTabInfo.paramValue"
+                        @input="handleSingleParameterUpdate(($event.target as HTMLTextAreaElement).value)"
+                        class="full-height-textarea"
+                      ></textarea>
                     </div>
-                    <div v-else>No node selected</div>
+                    
+                    <!-- Node overview with all parameters -->
+                    <div v-else-if="currentTabInfo?.type === 'node'">
+                      <ParameterInput
+                        v-for="param in currentParameters"
+                        :key="param.key"
+                        :parameter="param"
+                        @update:value="
+                          (key, value) => handleParameterUpdate(currentNode!.id, key, value)
+                        "
+                        @focus-parameter="(key) => handleParameterFocus(currentNode!.id, key)"
+                      />
+                    </div>
+                    
+                    <div v-else>No active node.</div>
                   </div>
                 </SplitterPanel>
               </SplitterGroup>
@@ -391,5 +495,59 @@ function handleTabTogglePin(tabValue: string) {
   padding: 16px;
   font-size: 14px;
   color: #666;
+  height: calc(100vh - 33px - 16px);
+  overflow: auto;
+}
+
+.node-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.parameters-section {
+  margin-top: 16px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin: 0 0 12px 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
+
+.single-parameter-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.parameter-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.full-height-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+  resize: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.full-height-textarea:focus {
+  outline: none;
+  border-color: #007acc;
 }
 </style>

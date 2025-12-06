@@ -1,32 +1,24 @@
 <script lang="ts" setup>
 import {
-  Bot,
-  Globe,
   MinusIcon,
   PanelBottom,
   PanelRight,
   PlusIcon,
   Sparkles,
-  Zap,
-  Pen,
-  GitBranch,
-  ToolCase,
-  UserCheck,
-  StickyNote,
   Search,
   Eye,
 } from 'lucide-vue-next'
 import ReusableDropdown from './ReusableDropdown.vue'
+import CommandBar from './CommandBar.vue'
+import { type FakeNode } from '../fake-nodes'
+import { ref, onMounted, onUnmounted } from 'vue'
 
-interface FakeNode {
-  id: string
-  name: string
-  params: Record<string, { type: string; value: string }>
-}
-
-defineProps<{
+const props = defineProps<{
   nodes: FakeNode[]
 }>()
+
+const canvasNodes = ref<FakeNode[]>([...props.nodes])
+const showCommandBar = ref(false)
 
 const emit = defineEmits<{
   (e: 'node-dblclick', nodeId: string): void
@@ -34,7 +26,60 @@ const emit = defineEmits<{
   (e: 'left-drawer-toggle'): void
   (e: 'right-drawer-toggle'): void
   (e: 'bottom-drawer-toggle'): void
+  (
+    e: 'node-added',
+    node: { id: string; name: string; params: Record<string, { type: string; value: string }> },
+  ): void
 }>()
+
+function addNodeToCanvas(nodeTemplate: FakeNode) {
+  const newNode: FakeNode = {
+    ...nodeTemplate,
+    id: `${nodeTemplate.id}-${Date.now()}`,
+  }
+  canvasNodes.value.push(newNode)
+
+  // Convert to App.vue FakeNode format and emit
+  const appNode = {
+    id: newNode.id,
+    name: newNode.name,
+    params: convertParamsToAppFormat(newNode.params),
+  }
+  emit('node-added', appNode)
+}
+
+// Convert NodeParam[] to App.vue format
+function convertParamsToAppFormat(
+  params: import('../fake-nodes').NodeParam[],
+): Record<string, { type: string; value: string }> {
+  const result: Record<string, { type: string; value: string }> = {}
+  params.forEach((param) => {
+    result[param.name] = {
+      type: param.type,
+      value: param.default?.toString() || '',
+    }
+  })
+  return result
+}
+
+function toggleCommandBar() {
+  showCommandBar.value = !showCommandBar.value
+}
+
+function handleGlobalKeyDown(event: KeyboardEvent) {
+  if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+    event.preventDefault()
+    toggleCommandBar()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleGlobalKeyDown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleGlobalKeyDown)
+})
 
 let clickTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -94,17 +139,10 @@ function handleDoubleClick(nodeId: string) {
         <button class="ExecuteButton" @click="$emit('bottom-drawer-toggle')">
           Execute workflow
         </button>
+
         <span class="Divider" />
-        <Zap />
-        <Bot />
-        <Globe />
-        <Pen />
-        <GitBranch />
-        <ToolCase />
-        <UserCheck />
-        <StickyNote />
-        <span class="Divider" />
-        <Search />
+
+        <Search @click="toggleCommandBar" />
       </div>
       <button class="ControlButton" @click="$emit('bottom-drawer-toggle')">
         <PanelBottom />
@@ -113,12 +151,18 @@ function handleDoubleClick(nodeId: string) {
     <div
       @dblclick="handleDoubleClick(node.id)"
       @click="handleClick(node.id)"
-      v-for="node in nodes"
+      v-for="node in canvasNodes"
       :key="node.id"
       class="FakeNode"
     >
       <h3>{{ node.name }}</h3>
     </div>
+
+    <CommandBar
+      :visible="showCommandBar"
+      @close="showCommandBar = false"
+      @add-node="addNodeToCanvas"
+    />
   </div>
 </template>
 

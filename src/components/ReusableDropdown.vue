@@ -75,30 +75,29 @@ const handleSearchInput = (event: Event) => {
 }
 
 const handleGlobalKeyDown = (event: KeyboardEvent) => {
+  // Only handle events when dropdown is open
+  if (!isOpen.value) return
+  
   console.log('Global keydown:', event.key)
   if (event.key === 'ArrowDown') {
     event.preventDefault()
-    if (!isOpen.value) return
     selectedIndex.value = (selectedIndex.value + 1) % selectableItems.value.length
     return
   }
 
   if (event.key === 'ArrowRight' || event.key === 'Enter') {
     event.preventDefault()
-    if (!isOpen.value) return
     return
   }
 
   if (event.key === 'Escape') {
     event.preventDefault()
-    if (!isOpen.value) return
     isOpen.value = false
     return
   }
 
   if (event.key === 'ArrowUp') {
     event.preventDefault()
-    if (!isOpen.value) return
     selectedIndex.value =
       (selectedIndex.value - 1 + selectableItems.value.length) % selectableItems.value.length
     return
@@ -106,12 +105,10 @@ const handleGlobalKeyDown = (event: KeyboardEvent) => {
 
   if (event.key === 'Backspace') {
     event.preventDefault()
-    if (!isOpen.value) return
     searchValue.value = searchValue.value.slice(0, -1)
     return
   }
   searchValue.value = searchValue.value + event.key || ''
-  if (!isOpen.value) return
 
   console.log('Not open:', event.key)
 }

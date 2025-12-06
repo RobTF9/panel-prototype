@@ -99,6 +99,7 @@ export function useEditorPanels(refs: Refs) {
   }
 
   function resetPanels() {
+    localStorage.clear()
     setFullScreen(null)
 
     // Reset all panels to their default states

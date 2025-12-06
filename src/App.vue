@@ -209,6 +209,10 @@ function toggleAssistantPanel() {
     assistantRef.value?.expand()
   }
 }
+
+function handleNodeAdded(node: FakeNode) {
+  nodes.value.push(node)
+}
 </script>
 
 <template>
@@ -244,6 +248,7 @@ function toggleAssistantPanel() {
                     :nodes="nodes"
                     @node-click="handleNodeClick"
                     @node-dblclick="handleNodeDoubleClick"
+                    @node-added="handleNodeAdded"
                   />
                 </SplitterPanel>
                 <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />

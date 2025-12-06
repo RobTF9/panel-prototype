@@ -139,7 +139,8 @@ function getNodeParams(node: any): Record<string, { type: string; value: string 
 </script>
 
 <template>
-  <div class="FakeNodesContainer" @click="handleCanvasClick">
+  <div class="FakeCanvasWrapper">
+    <!-- Fixed controls that don't scroll -->
     <aside class="TopLeft Controls">
       <button class="ControlButton" @click="$emit('left-drawer-toggle')">
         <Sparkles />
@@ -181,20 +182,24 @@ function getNodeParams(node: any): Record<string, { type: string; value: string 
         <PanelBottom />
       </button>
     </aside>
-    <div
-      @dblclick="handleDoubleClick(node.id)"
-      @click="handleClick(node.id)"
-      v-for="node in canvasNodes"
-      :key="node.id"
-      class="FakeNode"
-    >
-      <h3>{{ node.name }}</h3>
-      <NodeActions 
-        :node-id="node.id"
-        :node-name="node.name"
-        :node-params="getNodeParams(node)"
-        @action-click="handleNodeAction"
-      />
+
+    <!-- Scrollable nodes container -->
+    <div class="FakeNodesContainer" @click="handleCanvasClick">
+      <div
+        @dblclick="handleDoubleClick(node.id)"
+        @click="handleClick(node.id)"
+        v-for="node in canvasNodes"
+        :key="node.id"
+        class="FakeNode"
+      >
+        <h3 class="node-title">{{ node.name }}</h3>
+        <NodeActions 
+          :node-id="node.id"
+          :node-name="node.name"
+          :node-params="getNodeParams(node)"
+          @action-click="handleNodeAction"
+        />
+      </div>
     </div>
 
     <CommandBar
@@ -206,18 +211,23 @@ function getNodeParams(node: any): Record<string, { type: string; value: string 
 </template>
 
 <style scoped>
+.FakeCanvasWrapper {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  background-color: #eee;
+}
+
 .FakeNodesContainer {
   display: flex;
   gap: 16px;
   padding: 16px;
-  background-color: #eee;
   height: 100%;
   width: 100%;
   box-sizing: border-box;
   justify-content: center;
   align-items: center;
   overflow: auto;
-  position: relative;
 }
 
 .FakeNode {
@@ -226,10 +236,24 @@ function getNodeParams(node: any): Record<string, { type: string; value: string 
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 4px;
-  padding: 16px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-width: 100px;
-  text-align: center;
+  width: 100px;
+  height: 100px;
+}
+
+.node-title {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 14px;
+  white-space: nowrap;
+  color: #333;
+}
+
+.FakeNode:hover :deep(.menu-button) {
+  opacity: 1;
 }
 
 .Controls {
@@ -237,6 +261,7 @@ function getNodeParams(node: any): Record<string, { type: string; value: string 
   display: flex;
   gap: 8px;
   padding: 8px;
+  z-index: 10;
 }
 
 .TopLeft {

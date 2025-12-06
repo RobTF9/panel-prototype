@@ -9,6 +9,7 @@ import type { DropdownItem } from './components/ReusableDropdown.vue'
 import { Plus } from 'lucide-vue-next'
 import FakeCanvas from './components/FakeCanvas.vue'
 import ParameterInput from './components/ParameterInput.vue'
+import ExecutionTab from './components/ExecutionTab.vue'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
@@ -137,7 +138,7 @@ const footerTabs = useTabs({
     { value: 'Variable', label: 'Variable' },
     { value: 'Issues', label: 'Issues' },
   ],
-  defaultValue: 'tab1',
+  defaultValue: 'Executions',
 })
 
 // Create dropdown items from nodes
@@ -641,8 +642,20 @@ function handleFooterHeaderAction() {
                 @close-panel="() => togglePanelVisibility('footer')"
                 @update:active-tab="footerTabs.setActiveTab"
               />
-              <div class="panel-content">
-                Active Footer Tab: {{ footerTabs.activeTab.value?.label }}
+              <div>
+                <ExecutionTab v-if="footerTabs.activeTabValue.value === 'Executions'" />
+                <div v-else-if="footerTabs.activeTabValue.value === 'Evaluations'">
+                  <p>Evaluations content will go here</p>
+                </div>
+                <div v-else-if="footerTabs.activeTabValue.value === 'Data tables'">
+                  <p>Data tables content will go here</p>
+                </div>
+                <div v-else-if="footerTabs.activeTabValue.value === 'Variable'">
+                  <p>Variable content will go here</p>
+                </div>
+                <div v-else-if="footerTabs.activeTabValue.value === 'Issues'">
+                  <p>Issues content will go here</p>
+                </div>
               </div>
             </SplitterPanel>
           </SplitterGroup>

@@ -107,32 +107,32 @@ function closeMenu() {
 <style scoped>
 .node-actions {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: -30px;
+  right: 0;
   z-index: 10;
 }
 
 .menu-button {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 4px;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 24px;
+  height: 24px;
   opacity: 0;
   transition: all 0.2s ease;
 }
 
-.node-actions:hover .menu-button,
 .menu-button.active {
   opacity: 1;
 }
 
 .menu-button:hover {
-  background: white;
-  border-color: #007acc;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
 }
 
 .dropdown-menu {

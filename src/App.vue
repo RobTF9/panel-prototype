@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SplitterGroup, SplitterPanel, SplitterResizeHandle } from 'reka-ui'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import PanelHeader from './components/PanelHeader.vue'
 import { useEditorPanels } from './composables/useEditorPanels'
 import { useTabs } from './composables/useTabs'
@@ -14,6 +14,12 @@ const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
 const ndvRef = ref<InstanceType<typeof SplitterPanel>>()
 const footerRef = ref<InstanceType<typeof SplitterPanel>>()
+
+// NDV panel width detection
+const ndvPanelWidth = ref(0)
+const ndvPanelElement = ref<HTMLElement>()
+
+const isWideLayout = computed(() => ndvPanelWidth.value > 850)
 
 const {
   panelStates,
@@ -243,7 +249,7 @@ const currentTabInfo = computed(() => {
   const parts = activeTab.value.split('-')
   const nodeId = parts[1]
   const node = nodes.value.find((n) => n.id === nodeId)
-  
+
   if (!node) return null
 
   // Check if this is a parameter tab (format: "node-{id}-param-{param}")
@@ -253,10 +259,10 @@ const currentTabInfo = computed(() => {
       type: 'parameter',
       node,
       paramKey,
-      paramValue: node.params[paramKey]?.value || ''
+      paramValue: node.params[paramKey]?.value || '',
     }
   }
-  
+
   // Otherwise it's a node tab
   return {
     type: 'node',
@@ -265,7 +271,7 @@ const currentTabInfo = computed(() => {
       key,
       type: param.type,
       value: param.value,
-    }))
+    })),
   }
 })
 
@@ -311,7 +317,7 @@ function handleParameterFocus(nodeId: string, paramKey: string) {
     // Add new parameter tab
     ndvTabs.addTab({ value: tabValue, label: tabLabel, isPinned: false })
   }
-  
+
   // Show NDV panel if hidden
   if (!panelStates.value.ndv.isVisible) {
     togglePanelVisibility('ndv')
@@ -327,6 +333,53 @@ function handleNodeAction(action: string, nodeId: string, paramKey?: string) {
     console.log(`Action: ${action}, Node: ${nodeId}`)
   }
 }
+
+// Width detection for NDV panel
+let resizeObserver: ResizeObserver | null = null
+
+function updateNdvWidth() {
+  if (ndvPanelElement.value) {
+    ndvPanelWidth.value = ndvPanelElement.value.clientWidth
+    console.log('NDV panel width:', ndvPanelWidth.value, 'Wide layout:', ndvPanelWidth.value > 850)
+  }
+}
+
+function setupResizeObserver() {
+  if (ndvPanelElement.value) {
+    resizeObserver = new ResizeObserver(() => {
+      updateNdvWidth()
+    })
+    resizeObserver.observe(ndvPanelElement.value)
+    updateNdvWidth() // Initial measurement
+  }
+}
+
+// Watch for NDV panel visibility changes
+watch(
+  () => panelStates.value.ndv.isVisible && ndvTabs.tabs.value.length > 0,
+  (isVisible) => {
+    if (isVisible) {
+      nextTick(() => {
+        setupResizeObserver()
+      })
+    }
+  },
+)
+
+onMounted(() => {
+  window.addEventListener('resize', updateNdvWidth)
+  // Setup observer after a short delay to ensure DOM is ready
+  setTimeout(() => {
+    setupResizeObserver()
+  }, 200)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateNdvWidth)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
+})
 </script>
 
 <template>
@@ -376,44 +429,139 @@ function handleNodeAction(action: string, nodeId: string, paramKey?: string) {
                   collapsible
                   :min-size="15"
                 >
-                  <PanelHeader
-                    position="right"
-                    :full-screen="currentFullScreenPanel === 'ndv'"
-                    title="NDV"
-                    :tabs="ndvTabs.tabs.value"
-                    :active-tab="ndvTabs.activeTabValue.value"
-                    :show-tab-actions="true"
-                    @toggle-fullscreen="() => toggleFullScreen('ndv')"
-                    @close-panel="() => togglePanelVisibility('ndv')"
-                    @update:active-tab="ndvTabs.setActiveTab"
-                    @close-tab="handleTabClose"
-                    @toggle-pin="handleTabTogglePin"
-                  >
-                  </PanelHeader>
-                  <div class="panel-content">
-                    <!-- Parameter-focused view -->
-                    <div v-if="currentTabInfo?.type === 'parameter'" class="single-parameter-view">
-                      <textarea
-                        :value="currentTabInfo.paramValue"
-                        @input="handleSingleParameterUpdate(($event.target as HTMLTextAreaElement).value)"
-                        class="full-height-textarea"
-                      ></textarea>
+                  <div ref="ndvPanelElement" class="ndv-panel-container">
+                    <PanelHeader
+                      position="right"
+                      :full-screen="currentFullScreenPanel === 'ndv'"
+                      title="NDV"
+                      :tabs="ndvTabs.tabs.value"
+                      :active-tab="ndvTabs.activeTabValue.value"
+                      :show-tab-actions="true"
+                      @toggle-fullscreen="() => toggleFullScreen('ndv')"
+                      @close-panel="() => togglePanelVisibility('ndv')"
+                      @update:active-tab="ndvTabs.setActiveTab"
+                      @close-tab="handleTabClose"
+                      @toggle-pin="handleTabTogglePin"
+                    >
+                    </PanelHeader>
+                    <!-- Wide layout (> 850px) -->
+                    <div v-if="isWideLayout" class="ndv-wide-content">
+                      <!-- Parameter-focused view - 3 columns -->
+                      <div v-if="currentTabInfo?.type === 'parameter'" class="param-wide-layout">
+                        <SplitterGroup direction="horizontal" auto-save-id="ndv-param-wide">
+                          <!-- Input panel -->
+                          <SplitterPanel :default-size="30" :min-size="20">
+                            <div class="placeholder-panel">
+                              <h4>Input</h4>
+                              <p>Parameter input data will go here</p>
+                            </div>
+                          </SplitterPanel>
+                          <SplitterResizeHandle class="handle" />
+
+                          <!-- Main parameter editor -->
+                          <SplitterPanel :default-size="40" :min-size="30">
+                            <div class="single-parameter-view-wide">
+                              <textarea
+                                :value="currentTabInfo.paramValue"
+                                @input="
+                                  handleSingleParameterUpdate(
+                                    ($event.target as HTMLTextAreaElement).value,
+                                  )
+                                "
+                                class="full-height-textarea"
+                              ></textarea>
+                            </div>
+                          </SplitterPanel>
+                          <SplitterResizeHandle class="handle" />
+
+                          <!-- Result panel -->
+                          <SplitterPanel :default-size="30" :min-size="20">
+                            <div class="result-panel">
+                              <h4>Result</h4>
+                              <textarea
+                                :value="currentTabInfo.paramValue"
+                                readonly
+                                class="result-textarea"
+                              ></textarea>
+                            </div>
+                          </SplitterPanel>
+                        </SplitterGroup>
+                      </div>
+
+                      <!-- Node overview - 3 columns -->
+                      <div v-else-if="currentTabInfo?.type === 'node'" class="node-wide-layout">
+                        <SplitterGroup direction="horizontal" auto-save-id="ndv-node-wide">
+                          <!-- Input panel -->
+                          <SplitterPanel :default-size="25" :min-size="20">
+                            <div class="placeholder-panel">
+                              <h4>Input</h4>
+                              <p>Node input data will go here</p>
+                            </div>
+                          </SplitterPanel>
+                          <SplitterResizeHandle class="handle" />
+
+                          <!-- Parameters -->
+                          <SplitterPanel :default-size="50" :min-size="30">
+                            <div class="parameters-content">
+                              <ParameterInput
+                                v-for="param in currentParameters"
+                                :key="param.key"
+                                :parameter="param"
+                                @update:value="
+                                  (key, value) => handleParameterUpdate(currentNode!.id, key, value)
+                                "
+                                @focus-parameter="
+                                  (key) => handleParameterFocus(currentNode!.id, key)
+                                "
+                              />
+                            </div>
+                          </SplitterPanel>
+                          <SplitterResizeHandle class="handle" />
+
+                          <!-- Output panel -->
+                          <SplitterPanel :default-size="25" :min-size="20">
+                            <div class="placeholder-panel">
+                              <h4>Output</h4>
+                              <p>Node output data will go here</p>
+                            </div>
+                          </SplitterPanel>
+                        </SplitterGroup>
+                      </div>
                     </div>
-                    
-                    <!-- Node overview with all parameters -->
-                    <div v-else-if="currentTabInfo?.type === 'node'">
-                      <ParameterInput
-                        v-for="param in currentParameters"
-                        :key="param.key"
-                        :parameter="param"
-                        @update:value="
-                          (key, value) => handleParameterUpdate(currentNode!.id, key, value)
-                        "
-                        @focus-parameter="(key) => handleParameterFocus(currentNode!.id, key)"
-                      />
+
+                    <!-- Narrow layout (≤ 850px) - original single column -->
+                    <div v-else class="panel-content">
+                      <!-- Parameter-focused view -->
+                      <div
+                        v-if="currentTabInfo?.type === 'parameter'"
+                        class="single-parameter-view"
+                      >
+                        <textarea
+                          :value="currentTabInfo.paramValue"
+                          @input="
+                            handleSingleParameterUpdate(
+                              ($event.target as HTMLTextAreaElement).value,
+                            )
+                          "
+                          class="full-height-textarea"
+                        ></textarea>
+                      </div>
+
+                      <!-- Node overview with all parameters -->
+                      <div v-else-if="currentTabInfo?.type === 'node'">
+                        <ParameterInput
+                          v-for="param in currentParameters"
+                          :key="param.key"
+                          :parameter="param"
+                          @update:value="
+                            (key, value) => handleParameterUpdate(currentNode!.id, key, value)
+                          "
+                          @focus-parameter="(key) => handleParameterFocus(currentNode!.id, key)"
+                        />
+                      </div>
+
+                      <div v-else>No active node.</div>
                     </div>
-                    
-                    <div v-else>No active node.</div>
                   </div>
                 </SplitterPanel>
               </SplitterGroup>
@@ -549,5 +697,83 @@ function handleNodeAction(action: string, nodeId: string, paramKey?: string) {
 .full-height-textarea:focus {
   outline: none;
   border-color: #007acc;
+}
+
+.ndv-panel-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ndv-wide-content {
+  flex: 1;
+  height: calc(100% - 33px);
+}
+
+.param-wide-layout,
+.node-wide-layout {
+  height: 100%;
+}
+
+.single-parameter-view-wide {
+  height: 100%;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.single-parameter-view-wide .full-height-textarea {
+  flex: 1;
+}
+
+.parameters-content {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.placeholder-panel {
+  padding: 16px;
+  background: #f9f9f9;
+  border-right: 1px solid #eee;
+  height: 100%;
+}
+
+.placeholder-panel h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.placeholder-panel p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.result-panel {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-panel h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.result-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #f9f9f9;
+  resize: none;
+  font-family: inherit;
+  color: #666;
 }
 </style>

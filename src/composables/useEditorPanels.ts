@@ -36,15 +36,27 @@ export function useEditorPanels(refs: Refs) {
 
   function togglePanelVisibility(panelId: PanelId) {
     const state = panelStates.value[panelId]
-    state.isVisible = !state.isVisible
-
-    console.log(`Toggling visibility for panel ${panelId}: ${state.isVisible}`)
-
     const panelRef = refMap[panelId]
-    if (state.isVisible) {
-      panelRef.value?.expand()
-    } else {
+
+    console.log(`Toggling visibility for panel ${panelId}: current visible=${state.isVisible}`)
+
+    // Check if panel is currently expanded (similar to toggleAssistantPanel logic)
+    const isExpanded = panelRef.value?.isExpanded
+
+    if (isExpanded) {
+      // Panel is expanded, collapse it
+      state.isVisible = false
       panelRef.value?.collapse()
+    } else {
+      // Panel is collapsed or has size 0, expand it to default size
+      state.isVisible = true
+      state.isCollapsed = false
+      panelRef.value?.expand()
+      
+      // Reset to default size if it was collapsed
+      if (state.size > 0) {
+        panelRef.value?.resize(state.size)
+      }
     }
   }
 

@@ -10,6 +10,7 @@ import { Plus } from 'lucide-vue-next'
 import FakeCanvas from './components/FakeCanvas.vue'
 import ParameterInput from './components/ParameterInput.vue'
 import ExecutionTab from './components/ExecutionTab.vue'
+import DataTablesTab from './components/DataTablesTab.vue'
 
 const assistantRef = ref<InstanceType<typeof SplitterPanel>>()
 const canvasRef = ref<InstanceType<typeof SplitterPanel>>()
@@ -647,9 +648,7 @@ function handleFooterHeaderAction() {
                 <div v-else-if="footerTabs.activeTabValue.value === 'Evaluations'">
                   <p>Evaluations content will go here</p>
                 </div>
-                <div v-else-if="footerTabs.activeTabValue.value === 'Data tables'">
-                  <p>Data tables content will go here</p>
-                </div>
+                <DataTablesTab v-else-if="footerTabs.activeTabValue.value === 'Data tables'" />
                 <div v-else-if="footerTabs.activeTabValue.value === 'Variable'">
                   <p>Variable content will go here</p>
                 </div>

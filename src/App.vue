@@ -6,7 +6,7 @@ import { useEditorPanels } from './composables/useEditorPanels'
 import { useTabs } from './composables/useTabs'
 import ReusableDropdown from './components/ReusableDropdown.vue'
 import type { DropdownItem } from './components/ReusableDropdown.vue'
-import { Plus } from 'lucide-vue-next'
+import { EllipsisVertical, History } from 'lucide-vue-next'
 import FakeCanvas from './components/FakeCanvas.vue'
 import ParameterInput from './components/ParameterInput.vue'
 import ExecutionTab from './components/ExecutionTab.vue'
@@ -26,7 +26,6 @@ const isWideLayout = computed(() => ndvPanelWidth.value > 850)
 // Track panel maximized states
 const isNdvMaximized = computed(() => isPanelMaximized('ndv'))
 const isFooterMaximized = computed(() => isPanelMaximized('footer'))
-
 
 const {
   panelStates,
@@ -79,13 +78,7 @@ const handleNodeDoubleClick = (nodeId: string) => {
     ndvTabs.addTab({ value: tabValue, label: tabLabel })
   }
 
-  // Show NDV panel and make it fullscreen
-  if (!panelStates.value.ndv.isVisible) {
-    togglePanelVisibility('ndv')
-  }
-  if (currentFullScreenPanel.value !== 'ndv') {
-    toggleFullScreen('ndv')
-  }
+  toggleFullScreen('ndv')
 }
 
 interface FakeNode {
@@ -421,6 +414,33 @@ function handleChatOpen() {
   // Open chat interface in a new window
   window.open('/chat.html', 'chat', 'width=450,height=650,scrollbars=no,resizable=yes')
 }
+
+// Workflow menu items for dropdown
+const workflowMenuItems: DropdownItem[] = [
+  {
+    id: 'dependencies',
+    label: 'Dependencies',
+    children: [
+      { id: 'credentials', label: 'Credentials' },
+      { id: 'data-tables', label: 'Data tables' },
+      { id: 'sub-workflows', label: 'Sub-workflows' },
+      { id: 'variables', label: 'Variables' },
+    ],
+  },
+  { id: 'description', label: 'Description' },
+  { id: 'rename', label: 'Rename' },
+  { id: 'tags', label: 'Tags' },
+  { id: 'download', label: 'Download' },
+  { id: 'import', label: 'Import' },
+  { id: 'push', label: 'Push' },
+  { id: 'share', label: 'Share' },
+  { id: 'settings', label: 'Settings' },
+  { id: 'archive', label: 'Archive' },
+]
+
+function handleWorkflowMenuItemClick(itemId: string, subItemId?: string) {
+  console.log('Workflow menu item clicked:', itemId, subItemId)
+}
 </script>
 
 <template>
@@ -428,10 +448,27 @@ function handleChatOpen() {
     <nav class="nav"></nav>
     <main class="main">
       <header class="header">
-        <button @click="toggleFullScreen('canvas')">Canvas</button>
-        <button @click="toggleFullScreen('ndv')">NDV</button>
-        <button @click="toggleFullScreen('footer')">Footer</button>
-        <button @click="resetPanels()">Reset</button>
+        <div class="breadcrumbs">
+          <span class="breadcrumb-item">Project</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item">Folder</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-item">Workflow</span>
+          <ReusableDropdown
+            :items="workflowMenuItems"
+            trigger-label=""
+            no-search
+            @item-click="handleWorkflowMenuItemClick"
+          >
+            <EllipsisVertical class="breadcrumb-icon" />
+          </ReusableDropdown>
+        </div>
+        <div class="header-buttons">
+          <button class="text-button">Publish</button>
+          <button class="icon-button">
+            <History />
+          </button>
+        </div>
       </header>
       <SplitterGroup auto-save-id="editor-1" direction="horizontal">
         <SplitterPanel
@@ -672,7 +709,7 @@ function handleChatOpen() {
   </div>
 </template>
 
-<style scoped>
+<style>
 .wrapper {
   position: relative;
   width: 100vw;
@@ -700,6 +737,132 @@ function handleChatOpen() {
   height: 42px;
   width: 100%;
   border-bottom: 1px solid grey;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breadcrumb-item {
+  font-size: 14px;
+  color: #333;
+}
+
+.breadcrumb-separator {
+  font-size: 14px;
+  color: #666;
+}
+
+.breadcrumb-icon {
+  width: 16px;
+  height: 16px;
+  color: #666;
+  margin-left: 4px;
+  cursor: pointer;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.text-button {
+  background: none;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.text-button:hover {
+  background: #f5f5f5;
+}
+
+.icon-button {
+  background: none;
+  border: 1px solid #ccc;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.icon-button:hover {
+  background: #f5f5f5;
+}
+
+.icon-button svg {
+  width: 16px;
+  height: 16px;
+  color: #333;
+}
+
+/* Override ReusableDropdown trigger styling for breadcrumb icon */
+.breadcrumbs .dropdown-trigger {
+  background: none !important;
+  color: #666 !important;
+}
+
+.breadcrumbs .dropdown-trigger:hover {
+  background: none !important;
+}
+
+/* Fix dropdown content background */
+.breadcrumbs .dropdown-content {
+  background-color: white !important;
+}
+
+/* Override any modal overlay */
+.breadcrumbs [data-radix-popper-content-wrapper] {
+  background: none !important;
+}
+
+/* Override Radix UI dismissable layer with maximum specificity */
+html body div [data-dismissable-layer] {
+  background-color: white !important;
+  color: #333 !important;
+  border: 1px solid grey !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  font-size: 14px !important;
+}
+
+/* Try with ID selector for even higher specificity */
+#app [data-dismissable-layer] {
+  background-color: white !important;
+  color: #333 !important;
+  border: 1px solid grey !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  font-size: 14px !important;
+}
+
+/* Nuclear option - target with multiple selectors */
+div[data-dismissable-layer],
+span[data-dismissable-layer],
+*[data-dismissable-layer] {
+  background-color: white !important;
+  color: #333 !important;
+  border: 1px solid grey !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+  padding: 4px !important;
+  font-size: 14px !important;
 }
 
 .handle {

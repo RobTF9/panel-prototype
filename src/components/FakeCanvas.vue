@@ -87,18 +87,35 @@ onUnmounted(() => {
 })
 
 let clickTimer: ReturnType<typeof setTimeout> | null = null
+let lastClickTime = 0
+let lastClickedNodeId: string | null = null
 
 function handleClick(nodeId: string) {
+  const currentTime = Date.now()
+  const timeDiff = currentTime - lastClickTime
+  
+  // If this is a potential double-click (within 400ms on same node), don't start single-click timer
+  if (timeDiff < 400 && lastClickedNodeId === nodeId) {
+    if (clickTimer) {
+      clearTimeout(clickTimer)
+      clickTimer = null
+    }
+    return
+  }
+
   if (clickTimer) {
     clearTimeout(clickTimer)
     clickTimer = null
-    return
   }
+
+  lastClickTime = currentTime
+  lastClickedNodeId = nodeId
 
   clickTimer = setTimeout(() => {
     emit('node-click', nodeId)
     clickTimer = null
-  }, 50)
+    lastClickedNodeId = null
+  }, 200)
 }
 
 function handleDoubleClick(nodeId: string) {
@@ -106,6 +123,7 @@ function handleDoubleClick(nodeId: string) {
     clearTimeout(clickTimer)
     clickTimer = null
   }
+  lastClickedNodeId = null
   emit('node-dblclick', nodeId)
 }
 

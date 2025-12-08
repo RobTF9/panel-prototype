@@ -139,7 +139,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <DropdownMenuRoot modal @open-change="handleOpenChange">
+  <DropdownMenuRoot @open-change="handleOpenChange">
     <DropdownMenuTrigger as-child>
       <button class="dropdown-trigger">
         <slot>
@@ -224,7 +224,6 @@ onUnmounted(() => {
   border: 1px solid grey;
   border-radius: 4px;
   padding: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   min-width: 150px;
   z-index: 1000;
 }
@@ -235,6 +234,7 @@ onUnmounted(() => {
   padding: 6px 8px;
   font-size: 14px;
   color: #333;
+  background-color: white;
   cursor: pointer;
   border-radius: 2px;
   outline: none;
@@ -272,5 +272,10 @@ onUnmounted(() => {
 
 .search-input:focus {
   border-color: #007acc;
+}
+
+/* Override Radix UI dismissable layer background */
+:deep([data-dismissable-layer]) {
+  background-color: transparent !important;
 }
 </style>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            background: #f8f9fa;
+        }
+        
+        .chat-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #666;
+            font-size: 18px;
+        }
+        
+        .close-button:hover {
+            background: #e9ecef;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+        
+        .message-content {
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        
+        .user-message .message-content {
+            background: #007acc;
+            color: white;
+        }
+        
+        .ai-message .message-content {
+            background: #f1f3f4;
+            color: #333;
+        }
+        
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            padding: 0 4px;
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 16px;
+            border-top: 1px solid #eee;
+            gap: 8px;
+            background: #f8f9fa;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .message-input:focus {
+            border-color: #007acc;
+        }
+        
+        .send-button {
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 16px;
+        }
+        
+        .send-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .send-button:not(:disabled):hover {
+            background: #005a9e;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-header">
+        <h3>Chat Assistant</h3>
+        <button class="close-button" onclick="window.close()">×</button>
+    </div>
+
+    <div id="chat-messages" class="chat-messages">
+        <div class="message ai-message">
+            <div class="message-content">
+                Hello! How can I help you today?
+            </div>
+            <div class="message-time" id="initial-time"></div>
+        </div>
+    </div>
+
+    <div class="chat-input">
+        <input 
+            type="text" 
+            id="message-input"
+            class="message-input"
+            placeholder="Type your message..."
+            onkeypress="handleKeyPress(event)"
+        />
+        <button id="send-button" class="send-button" onclick="sendMessage()">➤</button>
+    </div>
+
+    <script>
+        let messageCounter = 1;
+        
+        // Set initial timestamp
+        document.getElementById('initial-time').textContent = formatTime(new Date());
+        
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const messageText = input.value.trim();
+            
+            if (!messageText) return;
+            
+            // Add user message
+            addMessage(messageText, true);
+            
+            // Clear input
+            input.value = '';
+            
+            // Scroll to bottom
+            scrollToBottom();
+            
+            // Simulate AI response after a short delay
+            setTimeout(() => {
+                const aiResponse = `I received your message: "${messageText}". This is a simple chat interface prototype running in a separate window.`;
+                addMessage(aiResponse, false);
+                scrollToBottom();
+            }, 1000);
+        }
+        
+        function addMessage(text, isUser) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            const timestamp = formatTime(new Date());
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">${text}</div>
+                <div class="message-time">${timestamp}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+        }
+        
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chat-messages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Update send button state
+        document.getElementById('message-input').addEventListener('input', function() {
+            const sendButton = document.getElementById('send-button');
+            sendButton.disabled = !this.value.trim();
+        });
+        
+        // Initial state
+        document.getElementById('send-button').disabled = true;
+        
+        // Focus input on load
+        document.getElementById('message-input').focus();
+    </script>
+</body>
+</html>

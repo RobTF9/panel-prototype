@@ -27,6 +27,7 @@ const isWideLayout = computed(() => ndvPanelWidth.value > 850)
 const isNdvMaximized = computed(() => isPanelMaximized('ndv'))
 const isFooterMaximized = computed(() => isPanelMaximized('footer'))
 
+
 const {
   panelStates,
   togglePanelVisibility,
@@ -414,6 +415,12 @@ function handleFooterHeaderAction() {
     toggleFullScreen('footer')
   }
 }
+
+// Handle chat interface
+function handleChatOpen() {
+  // Open chat interface in a new window
+  window.open('/chat.html', 'chat', 'width=450,height=650,scrollbars=no,resizable=yes')
+}
 </script>
 
 <template>
@@ -471,6 +478,7 @@ function handleFooterHeaderAction() {
                     @node-added="handleNodeAdded"
                     @canvas-click="handleCanvasClick"
                     @node-action="handleNodeAction"
+                    @chat-open="handleChatOpen"
                   />
                 </SplitterPanel>
                 <SplitterResizeHandle v-if="!currentFullScreenPanel" class="handle" />

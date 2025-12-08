@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import {
   MinusIcon,
+  MessageCircle,
   PanelBottom,
   PanelRight,
   PlusIcon,
@@ -28,6 +29,7 @@ const emit = defineEmits<{
   (e: 'right-drawer-toggle'): void
   (e: 'bottom-drawer-toggle'): void
   (e: 'canvas-click'): void
+  (e: 'chat-open'): void
   (e: 'node-action', action: string, nodeId: string, paramKey?: string): void
   (
     e: 'node-added',
@@ -173,7 +175,8 @@ function getNodeParams(node: any): Record<string, { type: string; value: string 
         <button class="ExecuteButton" @click="$emit('bottom-drawer-toggle')">
           Execute workflow
         </button>
-
+        <span class="Divider" />
+        <MessageCircle @click="$emit('chat-open')" />
         <span class="Divider" />
 
         <Search @click="toggleCommandBar" />
@@ -193,7 +196,7 @@ function getNodeParams(node: any): Record<string, { type: string; value: string 
         class="FakeNode"
       >
         <h3 class="node-title">{{ node.name }}</h3>
-        <NodeActions 
+        <NodeActions
           :node-id="node.id"
           :node-name="node.name"
           :node-params="getNodeParams(node)"
